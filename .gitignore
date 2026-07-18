@@ -1,11 +1,57 @@
-# session backups of the workbook
-*.backup-*.xlsx
-
-# python
-__pycache__/
-*.pyc
-
 # macOS
 .DS_Store
 Icon
 Icon?
+.AppleDouble
+.LSOverride
+
+# Logs and temp
+logs/
+tmp/
+*.log
+*.tmp
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Node (if added later)
+node_modules/
+dist/
+build/
+
+# Editors / local
+.idea/
+.vscode/
+.claude/
+*.swp
+*~
+
+# Workbook session backups
+*.backup-*.xlsx
+
+# NFC-e regenerated pipeline outputs (rebuild: python3 src/nfce/personal_inflation.py)
+src/nfce/personal_inflation_data.json
+src/nfce/personal_inflation_validation.json
+src/nfce/personal_inflation_extracted_items.json
+src/nfce/nfce_all.json
+src/nfce/inflation_data.json
+src/nfce/nfce_items.csv
+src/nfce/nfce_transactions.csv
+
+# Too large for GitHub (>100MB); keep local only
+src/nfce/notas/nfce.pdf
+
+# Nested git objects archived during cleanup (local reference only)
+archive/nfce-nested-git/

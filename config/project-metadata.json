@@ -1,0 +1,43 @@
+{
+  "project_name": "financas-2026",
+  "phase": "Fase 1",
+  "status": "operational_closed_for_weekly_maintenance",
+  "reporting_period": "2026-01_to_2026-06",
+  "main_dashboard": "src/html/financas2026-Dashboard.html",
+  "generated_report": "archive/RELATORIO-FECHAMENTO.md",
+  "data_sources": [
+    "Mercado Pago CSV statements",
+    "Mercado Pago PDF invoices",
+    "Banco Inter screenshots",
+    "BB Brasil workbook-backed entries",
+    "BCB Registrato PDFs",
+    "Mercado Livre and iFood evidence",
+    "NFC-e XML exports",
+    "data/financas2026-DataEntry.xlsx"
+  ],
+  "major_modules": [
+    "overview",
+    "weekly_tracker",
+    "card_transactions",
+    "subscriptions",
+    "banks",
+    "online_spend",
+    "cancel_tracker",
+    "international",
+    "mercado_pago",
+    "nfce_inflation"
+  ],
+  "maintenance_cadence": "weekly",
+  "created_by": "Claude Code",
+  "created_at": "2026-07-07 14:36:43 -0300",
+  "repo_summary": "Local-first personal finance repository using workbook, Python sync scripts, JSON data contract, and static HTML dashboard. Phase 1 is operational. Main dashboard: src/html/financas2026-Dashboard.html.",
+  "next_phase": {
+    "name": "Fase 2",
+    "status": "not_started",
+    "readiness_notes": [
+      "Native track exists as documentation and prototype, but not as the active operational system",
+      "Phase 2 should start only if the workbook-plus-sync workflow becomes a repeated bottleneck",
+      "Documentation and actual dashboard path should be aligned before larger migration work"
+    ]
+  }
+}

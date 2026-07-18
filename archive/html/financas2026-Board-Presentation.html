@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>financas-2026 · Board Presentation</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: #1e1e2e;
+    --border2: #2a2a3e;
+    --accent: #7c6af7;
+    --accent2: #5b4de0;
+    --accent-glow: rgba(124,106,247,0.18);
+    --gold: #d4a84b;
+    --gold-dim: rgba(212,168,75,0.15);
+    --green: #3ecf8e;
+    --green-dim: rgba(62,207,142,0.12);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.12);
+    --amber: #fbbf24;
+    --amber-dim: rgba(251,191,36,0.12);
+    --text: #e8e8f0;
+    --text2: #9898b8;
+    --text3: #5a5a78;
+    --slide-w: 1100px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ── SLIDE ENGINE ── */
+  #deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 52px 64px 40px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.45s cubic-bezier(.4,0,.2,1), transform 0.45s cubic-bezier(.4,0,.2,1);
+    transform: translateX(40px);
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(0);
+  }
+  .slide.out {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+
+  /* ── CHROME ── */
+  #chrome {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    z-index: 100;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent), #a78bf9);
+    transition: width 0.4s ease;
+    z-index: 101;
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .slide-counter {
+    font-size: 11px;
+    letter-spacing: .12em;
+    color: var(--text3);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .nav-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .nav-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .nav-dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    width: 18px;
+    border-radius: 3px;
+  }
+
+  .nav-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  .nav-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    padding: 8px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .04em;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover {
+    background: var(--border2);
+    color: var(--text);
+  }
+  .nav-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  .nav-btn.primary:hover { background: var(--accent2); }
+
+  /* ── NOTES PANEL ── */
+  #notes-toggle {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    font-size: 10px;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  #notes-toggle:hover { color: var(--text2); border-color: var(--text3); }
+
+  #notes-panel {
+    position: fixed;
+    bottom: 64px;
+    left: 0; right: 0;
+    background: rgba(11,11,18,0.97);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border2);
+    padding: 20px 64px;
+    transform: translateY(100%);
+    transition: transform 0.35s ease;
+    z-index: 99;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  #notes-panel.open { transform: translateY(0); }
+  #notes-panel h4 {
+    font-size: 9px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  #notes-panel p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text2);
+  }
+
+  /* ── TYPOGRAPHY ── */
+  .label {
+    font-size: 10px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .label.gold { color: var(--gold); }
+  .label.green { color: var(--green); }
+  .label.amber { color: var(--amber); }
+
+  h1.hero {
+    font-size: clamp(36px, 4.5vw, 58px);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -.02em;
+    background: linear-gradient(135deg, #ffffff 0%, #c8c8e8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2.slide-title {
+    font-size: clamp(22px, 2.8vw, 34px);
+    font-weight: 700;
+    letter-spacing: -.018em;
+    line-height: 1.15;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 15px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border2) 0%, transparent 100%);
+    margin: 20px 0;
+  }
+
+  /* ── LAYOUT HELPERS ── */
+  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .cols-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .cols-65-35 { display: grid; grid-template-columns: 1.8fr 1fr; gap: 24px; }
+  .flex-row { display: flex; gap: 16px; align-items: flex-start; }
+  .flex-center { display: flex; align-items: center; justify-content: center; }
+  .flex-col { display: flex; flex-direction: column; gap: 12px; }
+  .mt-auto { margin-top: auto; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .mt-32 { margin-top: 32px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+  }
+  .card.glow-accent { border-color: rgba(124,106,247,.3); box-shadow: 0 0 24px rgba(124,106,247,.06); }
+  .card.glow-green { border-color: rgba(62,207,142,.25); box-shadow: 0 0 24px rgba(62,207,142,.05); }
+  .card.glow-gold { border-color: rgba(212,168,75,.25); box-shadow: 0 0 24px rgba(212,168,75,.05); }
+  .card.glow-red { border-color: rgba(248,113,113,.25); }
+
+  /* ── STAT BLOCKS ── */
+  .stat-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat-value {
+    font-size: clamp(22px, 2.5vw, 30px);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .stat-sub {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  /* ── BULLET ROWS ── */
+  .bullet-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .bullet-row:last-child { border-bottom: none; }
+  .bullet-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    margin-top: 1px;
+  }
+  .bullet-icon.accent { background: var(--accent-glow); color: var(--accent); }
+  .bullet-icon.green { background: var(--green-dim); color: var(--green); }
+  .bullet-icon.gold { background: var(--gold-dim); color: var(--gold); }
+  .bullet-icon.red { background: var(--red-dim); color: var(--red); }
+  .bullet-icon.amber { background: var(--amber-dim); color: var(--amber); }
+  .bullet-content { flex: 1; }
+  .bullet-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+  .bullet-desc { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.5; }
+
+  /* ── TAG PILLS ── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+  }
+  .pill.accent { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(124,106,247,.25); }
+  .pill.green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(62,207,142,.25); }
+  .pill.gold { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(212,168,75,.25); }
+  .pill.amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(251,191,36,.25); }
+  .pill.red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,113,113,.25); }
+
+  /* ── DECISION OPTIONS ── */
+  .option-card {
+    border-radius: 10px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .option-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .option-card.recommended {
+    border-color: rgba(124,106,247,.45);
+    background: linear-gradient(135deg, rgba(124,106,247,.07) 0%, var(--surface) 100%);
+  }
+  .option-card .rec-badge {
+    position: absolute;
+    top: -1px; right: 14px;
+    background: var(--accent);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 0 0 6px 6px;
+  }
+  .option-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: .1em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .option-title { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+  .option-desc { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+  /* ── TAB WALKTHROUGH ── */
+  .tab-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .tab-item {
+    display: grid;
+    grid-template-columns: 22px 1fr 1fr 1fr;
+    gap: 16px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    align-items: start;
+    border: 1px solid transparent;
+  }
+  .tab-item:hover, .tab-item.selected {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+  .tab-item.selected { border-color: rgba(124,106,247,.3); background: rgba(124,106,247,.05); }
+  .tab-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text3);
+    padding-top: 2px;
+  }
+  .tab-name { font-size: 13px; font-weight: 700; }
+  .tab-look { font-size: 12px; color: var(--text2); line-height: 1.4; }
+  .tab-why { font-size: 12px; color: var(--text2); line-height: 1.4; }
+  .tab-header {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0 14px 6px;
+    display: grid;
+    grid-template-columns: 22px 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* ── RISK GRID ── */
+  .risk-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .risk-label { font-size: 11px; font-weight: 700; }
+  .risk-desc { font-size: 12px; color: var(--text2); line-height: 1.4; }
+  .risk-status {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* ── GATE CRITERIA ── */
+  .gate-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .gate-icon { font-size: 16px; flex-shrink: 0; }
+  .gate-text { font-size: 13px; color: var(--text2); }
+  .gate-text strong { color: var(--text); }
+
+  /* ── PHASE 2 STACK ── */
+  .stack-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    opacity: 0.5;
+  }
+  .stack-item:last-child { border-bottom: none; }
+  .stack-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text3);
+    flex-shrink: 0;
+  }
+
+  /* ── CLOSING QUOTE ── */
+  .closing-quote {
+    font-size: clamp(18px, 2.2vw, 26px);
+    font-weight: 300;
+    line-height: 1.55;
+    letter-spacing: -.01em;
+    color: var(--text2);
+    max-width: 820px;
+  }
+  .closing-quote strong { color: var(--text); font-weight: 700; }
+
+  /* ── BOARD PROMPT BOX ── */
+  .board-prompt {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+  .board-prompt strong { color: var(--accent); font-weight: 700; }
+  .board-prompt.gold { border-left-color: var(--gold); }
+  .board-prompt.gold strong { color: var(--gold); }
+  .board-prompt.green { border-left-color: var(--green); }
+  .board-prompt.green strong { color: var(--green); }
+
+  /* ── SLIDE-SPECIFIC ── */
+
+  /* S1 — Title */
+  #s1 {
+    justify-content: center;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(124,106,247,.08) 0%, transparent 70%);
+  }
+  #s1 .meta-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 28px;
+  }
+
+  /* S5 — Walkthrough tab detail panel */
+  #tab-detail {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 180px;
+    transition: all 0.25s;
+  }
+  #tab-detail .td-tab { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; font-weight: 600; }
+  #tab-detail .td-q { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  #tab-detail .td-why { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* S10 — Gate visual */
+  .gate-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--amber-dim);
+    color: var(--amber);
+    border: 1px solid rgba(251,191,36,.3);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Interactive prompt chip */
+  .demo-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(124,106,247,.3);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 20px;
+  }
+  .demo-chip::before { content: '▶'; font-size: 8px; }
+
+  /* Horizontal rule with label */
+  .section-sep {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 12px;
+  }
+  .section-sep span {
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+  .section-sep::before, .section-sep::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Keyboard hint */
+  kbd {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 10px;
+    color: var(--text3);
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<div id="deck">
+
+  <!-- ════════════════════════════════════════
+       SLIDE 1 — TITLE
+  ════════════════════════════════════════ -->
+  <div class="slide active" id="s1" data-notes="Open by framing the context: this is not a product pitch — it is a governance check-in on a financial control capability that has already been built and is already operational. Phase 1 is done. The board's role today is to understand what exists, validate the value, and decide what — if anything — should come next. Keep it grounded: this is personal financial infrastructure, not enterprise software. The dashboard is a working tool, not a prototype.">
+
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; max-width:780px;">
+      <div class="label" style="margin-bottom:20px;">Project financas-2026 · Board Review · July 2026</div>
+      <h1 class="hero">Personal Financial<br>Command Center</h1>
+      <p class="subtitle" style="margin-top:18px; max-width:560px; font-size:16px; line-height:1.65;">
+        A fully operational financial visibility layer covering six months of transactions across four institutions — built, running, and delivering actionable control.
+      </p>
+
+      <div class="meta-row">
+        <span class="pill green">● Phase 1 Complete</span>
+        <span class="pill accent">Jan – Jun 2026</span>
+        <span class="pill gold">9-Tab Dashboard</span>
+        <span class="pill" style="background:rgba(255,255,255,.05); color:var(--text2); border:1px solid var(--border2);">Zero Server Dependency</span>
+      </div>
+    </div>
+
+    <div style="position:absolute; bottom:80px; right:64px; text-align:right;">
+      <div style="font-size:11px; color:var(--text3); letter-spacing:.08em;">Board of Directors</div>
+      <div style="font-size:11px; color:var(--text3);">Confidential · Not for Distribution</div>
+    </div>
+
+    <div style="position:absolute; top:52px; right:64px;">
+      <div style="font-size:11px; color:var(--text3); letter-spacing:.08em; text-align:right;">Navigate: <kbd>←</kbd> <kbd>→</kbd> or buttons below</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 2 — EXECUTIVE SUMMARY
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s2" data-notes="The key message on this slide is: Phase 1 is not a plan — it is a delivered, working system. Emphasize that the dashboard is operational today and requires no server, no cloud account, no subscription. It opens in Safari and works. The five bullets represent the complete story in compressed form. Board members should leave this slide understanding: what was built, why it was needed, and that it is already providing value. Resist expanding this into a longer discussion — the following slides drill into each point.">
+
+    <div class="label">01 · Executive Summary</div>
+    <h2 class="slide-title">What Was Built. Why It Matters. What It Does Now.</h2>
+    <div class="divider"></div>
+
+    <div class="flex-col" style="flex:1; justify-content:center; gap:0;">
+
+      <div class="bullet-row">
+        <div class="bullet-icon green">✓</div>
+        <div class="bullet-content">
+          <div class="bullet-title">A single financial dashboard — fully operational</div>
+          <div class="bullet-desc">Built as a local HTML file, opened in Safari. No server, no cloud, no recurring cost. 9 tabs covering every major financial dimension from Jan–Jun 2026.</div>
+        </div>
+      </div>
+
+      <div class="bullet-row">
+        <div class="bullet-icon accent">◈</div>
+        <div class="bullet-content">
+          <div class="bullet-title">Four financial institutions unified in one view</div>
+          <div class="bullet-desc">Mercado Pago, Banco Inter, BB Brasil, and BCB Registrato — previously tracked in scattered PDFs, screenshots, and spreadsheets.</div>
+        </div>
+      </div>
+
+      <div class="bullet-row">
+        <div class="bullet-icon gold">$</div>
+        <div class="bullet-content">
+          <div class="bullet-title">R$122K cash flow gap explained and documented</div>
+          <div class="bullet-desc">The Cash Bridge module resolves a previously invisible discrepancy between account activity and reported balances. This is the highest-value single insight delivered.</div>
+        </div>
+      </div>
+
+      <div class="bullet-row">
+        <div class="bullet-icon accent">⟳</div>
+        <div class="bullet-content">
+          <div class="bullet-title">Weekly operating cadence established</div>
+          <div class="bullet-desc">A Sunday ritual drives manual data updates, keeping the dashboard current. Cadence-based governance, not automation-dependent reliability.</div>
+        </div>
+      </div>
+
+      <div class="bullet-row">
+        <div class="bullet-icon amber">⚑</div>
+        <div class="bullet-content">
+          <div class="bullet-title">Phase 2 is gated — not started, not approved</div>
+          <div class="bullet-desc">Native Swift development requires demonstrated evidence that HTML no longer solves the need. That threshold has not been reached. Discipline over momentum.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 3 — STRATEGIC PROBLEM
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s3" data-notes="This slide justifies why the project was necessary. The goal is to convey that the problem was real, persistent, and expensive in terms of time and cognitive overhead — not hypothetical. Fragmented financial data creates late awareness, poor reconciliation, and subscription leakage. The board should recognize the operational cost of 'managing by PDF' — and understand that the dashboard eliminates that mode of operating. Do not overstate the urgency; keep this grounded and factual.">
+
+    <div class="label">02 · Strategic Problem</div>
+    <h2 class="slide-title">The Cost of Financial Fragmentation</h2>
+    <div class="divider"></div>
+
+    <div class="cols-2" style="flex:1; align-content:start; gap:16px; margin-top:8px;">
+
+      <div class="card glow-red">
+        <div style="font-size:13px; font-weight:700; color:var(--red); margin-bottom:10px;">◉ Fragmented Visibility</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">Four banks. Multiple cards. International remittances. No single view of net position. Decisions made without the full picture.</div>
+      </div>
+
+      <div class="card glow-red">
+        <div style="font-size:13px; font-weight:700; color:var(--red); margin-bottom:10px;">◉ Manual Reconciliation at Scale</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">Each month required manually cross-referencing PDFs, screenshots, and bank exports. Time-intensive and error-prone with no audit trail.</div>
+      </div>
+
+      <div class="card glow-red">
+        <div style="font-size:13px; font-weight:700; color:var(--red); margin-bottom:10px;">◉ Subscription Leakage</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">Recurring charges across multiple platforms accumulated without centralized review. No structured process to evaluate, renew, or cancel services.</div>
+      </div>
+
+      <div class="card glow-red">
+        <div style="font-size:13px; font-weight:700; color:var(--red); margin-bottom:10px;">◉ Weak Weekly Control Loop</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">Without a weekly financial review structure, spending signals arrived late — often weeks after the fact, when corrective action was no longer practical.</div>
+      </div>
+
+    </div>
+
+    <div class="board-prompt gold mt-24">
+      <strong>Board question to consider:</strong> How long did it take, historically, to identify an unexpected R$10K+ movement across accounts? The dashboard is designed to reduce that latency to under one week.
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 4 — SOLUTION OVERVIEW
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s4" data-notes="Frame the dashboard as an operating layer, not a technology project. The distinction matters: this is not software for its own sake. It is a structured view of financial reality that enables decision-making. The local-HTML architecture choice was intentional — no server means no maintenance surface, no uptime risk, no subscription cost. The dark minimal interface was chosen to reduce cognitive friction during weekly reviews. Emphasize the breadth: 9 tabs is not bloat — each tab answers a specific financial question that previously had no structured home.">
+
+    <div class="label">03 · Solution Overview</div>
+    <h2 class="slide-title">One Operating Layer. Nine Financial Dimensions.</h2>
+    <div class="divider"></div>
+
+    <div class="cols-65-35" style="flex:1; align-items:start; margin-top:8px;">
+
+      <div class="flex-col" style="gap:0;">
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;">
+
+          <div class="stat-block">
+            <div class="stat-value" style="color:var(--accent);">9</div>
+            <div class="stat-label">Dashboard Tabs</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-value" style="color:var(--green);">4</div>
+            <div class="stat-label">Financial Sources</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-value" style="color:var(--gold);">6</div>
+            <div class="stat-label">Months Covered</div>
+          </div>
+        </div>
+
+        <div class="divider" style="margin:4px 0 12px;"></div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:9px;">
+          <div class="card" style="padding:13px 15px;">
+            <div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">Overview</div>
+            <div style="font-size:12px; color:var(--text2);">Net financial position at a glance</div>
+          </div>
+          <div class="card" style="padding:13px 15px;">
+            <div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">Weekly Tracker</div>
+            <div style="font-size:12px; color:var(--text2);">7-day spend rhythm and cadence</div>
+          </div>
+          <div class="card" style="padding:13px 15px;">
+            <div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">Card Transactions</div>
+            <div style="font-size:12px; color:var(--text2);">145 transactions catalogued</div>
+          </div>
+          <div class="card" style="padding:13px 15px;">
+            <div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">Subscriptions</div>
+            <div style="font-size:12px; color:var(--text2);">Recurring spend governance</div>
+          </div>
+          <div class="card" style="padding:13px 15px;">
+            <div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">Banks</div>
+            <div style="font-size:12px; color:var(--text2);">Multi-institution balance view</div>
+          </div>
+          <div class="card" style="padding:13px 15px;">
+            <div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">Online Spend</div>
+            <div style="font-size:12px; color:var(--text2);">Digital purchase categorization</div>
+          </div>
+          <div class="card" style="padding:13px 15px;">
+            <div style="font-size:11px; font-weight:700; color:var(--gold); margin-bottom:4px;">Cash Bridge ★</div>
+            <div style="font-size:12px; color:var(--text2);">Resolves R$122K transfer gap</div>
+          </div>
+          <div class="card" style="padding:13px 15px;">
+            <div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:4px;">Cancel Tracker</div>
+            <div style="font-size:12px; color:var(--text2);">11 active cancellation items</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-col" style="gap:14px;">
+        <div class="card glow-accent" style="padding:16px 18px;">
+          <div style="font-size:11px; font-weight:700; color:var(--accent); margin-bottom:8px; letter-spacing:.08em; text-transform:uppercase;">Architecture</div>
+          <div class="flex-col" style="gap:8px;">
+            <div style="font-size:13px; color:var(--text2);"><span style="color:var(--green);">●</span> Local HTML — zero server</div>
+            <div style="font-size:13px; color:var(--text2);"><span style="color:var(--green);">●</span> Chart.js visualizations</div>
+            <div style="font-size:13px; color:var(--text2);"><span style="color:var(--green);">●</span> Opens in Safari, no install</div>
+            <div style="font-size:13px; color:var(--text2);"><span style="color:var(--green);">●</span> Dark minimal interface</div>
+            <div style="font-size:13px; color:var(--text2);"><span style="color:var(--green);">●</span> No recurring cost or dependency</div>
+          </div>
+        </div>
+        <div class="card glow-green" style="padding:16px 18px;">
+          <div style="font-size:11px; font-weight:700; color:var(--green); margin-bottom:8px; letter-spacing:.08em; text-transform:uppercase;">Data Sources</div>
+          <div class="flex-col" style="gap:7px;">
+            <div style="font-size:13px; color:var(--text2);">🟢 Mercado Pago</div>
+            <div style="font-size:13px; color:var(--text2);">🟢 Banco Inter</div>
+            <div style="font-size:13px; color:var(--text2);">🟢 BB Brasil</div>
+            <div style="font-size:13px; color:var(--text2);">🟢 BCB Registrato</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 5 — DASHBOARD WALKTHROUGH
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s5" data-notes="This slide is intended for a live demo moment. If the dashboard HTML file is open in Safari, switch to it now and navigate through tabs in the order listed here. For each tab, pause briefly and let the board observe the actual data. Return to this presentation after the walkthrough. If a live demo is not available, use this slide as a guided verbal description and click each row to highlight the relevant tab context. The goal is to make the 9 tabs feel concrete — not abstract module names.">
+
+    <div class="label" style="margin-bottom:8px;">04 · Interactive Dashboard Walkthrough</div>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+      <h2 class="slide-title" style="margin-bottom:0;">9 Tabs · What to Look For</h2>
+      <span class="demo-chip">Live Demo Cue</span>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:16px; flex:1; align-items:start;">
+
+      <div>
+        <div class="tab-header">
+          <div>#</div>
+          <div>Tab</div>
+          <div>Key question answered</div>
+          <div>Strategic significance</div>
+        </div>
+        <div class="tab-list" id="tab-list"></div>
+      </div>
+
+      <div id="tab-detail">
+        <div class="td-tab">Click a tab row to inspect</div>
+        <div class="td-q" style="color:var(--text3); font-size:14px; font-weight:400;">Select any tab on the left to see its board-level context and what to highlight during a live demo.</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 6 — VALUE CREATED
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s6" data-notes="Translate engineering output into business language. The board does not need to know what Chart.js is — they need to know that financial visibility now takes minutes instead of hours. Each value point should be delivered as a before/after contrast. The key insight: Phase 1 eliminated the dependency on scattered, time-stamped documents as the primary source of financial truth. The manual update ritual may seem like a limitation, but it is actually an operational discipline — it means the data stays current through human accountability, not fragile automation.">
+
+    <div class="label">05 · Value Created — Phase 1</div>
+    <h2 class="slide-title">From Scattered Data to Operational Control</h2>
+    <div class="divider"></div>
+
+    <div class="cols-2" style="flex:1; align-content:start; gap:14px; margin-top:8px;">
+
+      <div class="card glow-green" style="padding:16px 20px;">
+        <div style="font-size:11px; font-weight:700; color:var(--green); letter-spacing:.08em; margin-bottom:8px; text-transform:uppercase;">Faster Financial Visibility</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">Six-month position accessible in under 60 seconds. Previously required assembling PDFs and bank exports manually — measured in hours, not seconds.</div>
+      </div>
+
+      <div class="card glow-green" style="padding:16px 20px;">
+        <div style="font-size:11px; font-weight:700; color:var(--green); letter-spacing:.08em; margin-bottom:8px; text-transform:uppercase;">Liquidity Awareness</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">Real account balances across four institutions visible in one view. Inter-account transfers documented. The R$122K Cash Bridge closes the most significant reconciliation gap.</div>
+      </div>
+
+      <div class="card glow-accent" style="padding:16px 20px;">
+        <div style="font-size:11px; font-weight:700; color:var(--accent); letter-spacing:.08em; margin-bottom:8px; text-transform:uppercase;">Expense Governance</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">145 card transactions categorized and queryable. Online spend and subscription modules create a structured expense ledger that drives active review — not passive accumulation.</div>
+      </div>
+
+      <div class="card glow-accent" style="padding:16px 20px;">
+        <div style="font-size:11px; font-weight:700; color:var(--accent); letter-spacing:.08em; margin-bottom:8px; text-transform:uppercase;">Subscription Decision Support</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">11 active items tracked in the Cancel Tracker. Each service now has a named status and review trigger — converting passive spend into an active decision queue.</div>
+      </div>
+
+      <div class="card glow-gold" style="padding:16px 20px;">
+        <div style="font-size:11px; font-weight:700; color:var(--gold); letter-spacing:.08em; margin-bottom:8px; text-transform:uppercase;">Auditable Update Ritual</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">Weekly Sunday manual update cycle creates a predictable governance cadence. Each cycle produces a current, dated snapshot of financial state — auditable and reproducible.</div>
+      </div>
+
+      <div class="card glow-gold" style="padding:16px 20px;">
+        <div style="font-size:11px; font-weight:700; color:var(--gold); letter-spacing:.08em; margin-bottom:8px; text-transform:uppercase;">Reduced Dependency on Scattered Documents</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.6;">PDFs, screenshots, and spreadsheets are no longer the primary reference. The dashboard is the single source of truth for six months of financial activity.</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 7 — EVIDENCE & METRICS
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s7" data-notes="Every figure on this slide comes directly from the project documentation. No metrics have been estimated or extrapolated. The R$122K Cash Bridge figure is particularly important — it represents a transfer amount that was previously unreconciled, not a loss or error. Be precise about this distinction. The 145 card transactions and 11 cancel-tracker items are operational facts, not projections. If the board asks about specific transaction details or balance breakdowns, those are available inside the dashboard itself — use this as a pointer to the live data, not the endpoint.">
+
+    <div class="label">06 · Evidence & Operating Metrics</div>
+    <h2 class="slide-title">What Phase 1 Has Produced — By the Numbers</h2>
+    <div class="divider"></div>
+
+    <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:14px; margin-top:8px;">
+
+      <div class="stat-block glow-accent" style="border-color:rgba(124,106,247,.25);">
+        <div class="stat-value" style="color:var(--accent);">6</div>
+        <div class="stat-label">Months Covered</div>
+        <div class="stat-sub">Jan – Jun 2026</div>
+      </div>
+
+      <div class="stat-block" style="border-color:rgba(62,207,142,.25);">
+        <div class="stat-value" style="color:var(--green);">145</div>
+        <div class="stat-label">Card Transactions</div>
+        <div class="stat-sub">Categorized & queryable</div>
+      </div>
+
+      <div class="stat-block" style="border-color:rgba(248,113,113,.25);">
+        <div class="stat-value" style="color:var(--red);">11</div>
+        <div class="stat-label">Cancel Tracker Items</div>
+        <div class="stat-sub">Active review queue</div>
+      </div>
+
+      <div class="stat-block" style="border-color:rgba(212,168,75,.25);">
+        <div class="stat-value" style="color:var(--gold); font-size:22px;">R$122K</div>
+        <div class="stat-label">Cash Bridge Gap</div>
+        <div class="stat-sub">Explained & reconciled</div>
+      </div>
+
+    </div>
+
+    <div class="cols-2" style="margin-top:16px; gap:14px;">
+
+      <div class="card glow-gold" style="padding:18px 20px;">
+        <div style="font-size:12px; font-weight:700; color:var(--gold); margin-bottom:10px; text-transform:uppercase; letter-spacing:.08em;">Cash Bridge — What It Explains</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.65;">
+          A R$122K discrepancy between reported account activity and visible balances was previously unexplained. The Cash Bridge module documents the inter-account transfers and remittances that account for this gap — converting a financial blind spot into a documented audit trail.
+        </div>
+      </div>
+
+      <div class="flex-col" style="gap:12px;">
+        <div class="card" style="padding:14px 16px;">
+          <div style="font-size:12px; font-weight:700; color:var(--text2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.08em;">Institutions Covered</div>
+          <div style="display:flex; flex-wrap:wrap; gap:7px;">
+            <span class="pill accent">Mercado Pago</span>
+            <span class="pill green">Banco Inter</span>
+            <span class="pill accent">BB Brasil</span>
+            <span class="pill" style="background:rgba(255,255,255,.05); color:var(--text2); border:1px solid var(--border2);">BCB Registrato</span>
+          </div>
+        </div>
+        <div class="card" style="padding:14px 16px;">
+          <div style="font-size:12px; font-weight:700; color:var(--text2); margin-bottom:6px; text-transform:uppercase; letter-spacing:.08em;">Confirmed Coverage Includes</div>
+          <div class="flex-col" style="gap:6px;">
+            <div style="font-size:13px; color:var(--text2);"><span style="color:var(--green);">✓</span> International remittances tracked</div>
+            <div style="font-size:13px; color:var(--text2);"><span style="color:var(--green);">✓</span> Account balances confirmed per institution</div>
+            <div style="font-size:13px; color:var(--text2);"><span style="color:var(--green);">✓</span> Subscription and online spend separated</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="board-prompt mt-16">
+      <strong>Data integrity note:</strong> All figures above are sourced from project documentation only. No metrics have been estimated or extrapolated for this presentation.
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 8 — GOVERNANCE & OPERATING MODEL
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s8" data-notes="The weekly Sunday update ritual is the operational backbone of this system. Without it, the dashboard becomes stale. Frame this positively: the fact that this cadence exists means the system is being actively operated, not just built and abandoned. The ritual is intentionally manual at this stage — not because automation is impossible, but because manual operation generates the evidence needed to decide whether automation is worth building. This is a governance-first approach: understand the workflow before encoding it. The board should view this cadence as an operating discipline, not a limitation to be solved.">
+
+    <div class="label">07 · Governance & Operating Model</div>
+    <h2 class="slide-title">The Weekly Ritual That Keeps This Operational</h2>
+    <div class="divider"></div>
+
+    <div class="cols-65-35" style="flex:1; align-items:start; margin-top:8px;">
+
+      <div>
+        <div class="section-sep"><span>Operating Cadence</span></div>
+
+        <div class="flex-col" style="gap:10px;">
+
+          <div class="card" style="padding:14px 18px; display:flex; gap:14px; align-items:flex-start;">
+            <div style="font-size:22px; line-height:1; margin-top:2px;">📅</div>
+            <div>
+              <div style="font-size:14px; font-weight:700; margin-bottom:4px;">Sunday Update Cycle</div>
+              <div style="font-size:13px; color:var(--text2); line-height:1.55;">Each Sunday, transaction data from all four institutions is manually reviewed and entered into the dashboard. This creates a weekly financial checkpoint with a consistent rhythm.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px; display:flex; gap:14px; align-items:flex-start;">
+            <div style="font-size:22px; line-height:1; margin-top:2px;">🔍</div>
+            <div>
+              <div style="font-size:14px; font-weight:700; margin-bottom:4px;">Source Document Review</div>
+              <div style="font-size:13px; color:var(--text2); line-height:1.55;">PDFs, bank exports, and card statements from Mercado Pago, Banco Inter, BB Brasil, and BCB Registrato are the primary inputs. Each is reviewed and reconciled against the dashboard.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px; display:flex; gap:14px; align-items:flex-start;">
+            <div style="font-size:22px; line-height:1; margin-top:2px;">✅</div>
+            <div>
+              <div style="font-size:14px; font-weight:700; margin-bottom:4px;">Cancel Tracker & Subscription Review</div>
+              <div style="font-size:13px; color:var(--text2); line-height:1.55;">Each cycle includes a pass over active subscriptions and the Cancel Tracker. Items are flagged, actioned, or carried forward — preventing passive accumulation of unreviewed recurring spend.</div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:14px 18px; display:flex; gap:14px; align-items:flex-start;">
+            <div style="font-size:22px; line-height:1; margin-top:2px;">📊</div>
+            <div>
+              <div style="font-size:14px; font-weight:700; margin-bottom:4px;">Weekly Snapshot — Auditable Output</div>
+              <div style="font-size:13px; color:var(--text2); line-height:1.55;">Each update produces a current, dated dashboard state. This is the audit artifact for the week — reproducible and reviewable at any future point.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="flex-col" style="gap:14px;">
+        <div class="card glow-accent" style="padding:16px 18px;">
+          <div style="font-size:11px; font-weight:700; color:var(--accent); letter-spacing:.08em; margin-bottom:10px; text-transform:uppercase;">Why Manual — Deliberately</div>
+          <div style="font-size:13px; color:var(--text2); line-height:1.6;">Automation is not the goal at this stage. Manual operation builds the evidence base needed to decide whether automation is justified. Understand before encoding.</div>
+        </div>
+        <div class="card glow-green" style="padding:16px 18px;">
+          <div style="font-size:11px; font-weight:700; color:var(--green); letter-spacing:.08em; margin-bottom:10px; text-transform:uppercase;">Maintainability</div>
+          <div style="font-size:13px; color:var(--text2); line-height:1.6;">The dashboard requires no infrastructure maintenance. Updates are data edits to the HTML file. There is no server to patch, no API to renew, no subscription to manage.</div>
+        </div>
+        <div class="board-prompt" style="margin-top:4px;">
+          <strong>Board question:</strong> Is the Sunday ritual being maintained consistently? Completion rate across the first 6-month cycle is the primary leading indicator of Phase 2 readiness.
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 9 — RISK & CONTROL
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s9" data-notes="Position this slide as a risk register, not a problem list. Each item represents a real operational risk that existed before the dashboard — and the control the dashboard provides against it. The board should understand both the residual risks (what is still manual, what still has timing gaps) and the material improvements already in place. Be honest: the dashboard does not eliminate all financial risk, but it materially improves the visibility layer that enables risk response. The manual-update bottleneck is the most significant residual risk — and it is the primary driver of the Phase 2 evaluation criteria.">
+
+    <div class="label">08 · Risk & Control View</div>
+    <h2 class="slide-title">What the Dashboard Controls — and What Remains Open</h2>
+    <div class="divider"></div>
+
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px; flex:1; align-content:start; margin-top:8px;">
+
+      <div class="risk-item" style="border-left:3px solid var(--green);">
+        <div class="risk-label">Data Fragmentation</div>
+        <div class="risk-desc">Four institutions previously siloed. Dashboard unifies all sources into one view with consistent structure.</div>
+        <div class="risk-status" style="color:var(--green);">● Controlled</div>
+      </div>
+
+      <div class="risk-item" style="border-left:3px solid var(--green);">
+        <div class="risk-label">Recurring Expense Drift</div>
+        <div class="risk-desc">Subscription module and Cancel Tracker create active review loop. 11 items currently in managed queue.</div>
+        <div class="risk-status" style="color:var(--green);">● Controlled</div>
+      </div>
+
+      <div class="risk-item" style="border-left:3px solid var(--green);">
+        <div class="risk-label">Transfer Visibility</div>
+        <div class="risk-desc">Cash Bridge documents R$122K in inter-account movements previously unexplained. Transfer trail is now auditable.</div>
+        <div class="risk-status" style="color:var(--green);">● Controlled</div>
+      </div>
+
+      <div class="risk-item" style="border-left:3px solid var(--green);">
+        <div class="risk-label">Bank & Account Exposure</div>
+        <div class="risk-desc">Banks tab provides consolidated view of balances and exposure across all four institutions. BCB Registrato data included.</div>
+        <div class="risk-status" style="color:var(--green);">● Controlled</div>
+      </div>
+
+      <div class="risk-item" style="border-left:3px solid var(--amber);">
+        <div class="risk-label">Manual-Update Bottleneck</div>
+        <div class="risk-desc">Dashboard is only as current as the last Sunday update. If cycle is missed, data lag accumulates. Single point of operational dependency.</div>
+        <div class="risk-status" style="color:var(--amber);">⚠ Residual — Monitored</div>
+      </div>
+
+      <div class="risk-item" style="border-left:3px solid var(--amber);">
+        <div class="risk-label">Spend-to-Visibility Timing Gap</div>
+        <div class="risk-desc">Transactions may not appear in the dashboard until the following Sunday. Up to 7 days of spending remain invisible between cycles.</div>
+        <div class="risk-status" style="color:var(--amber);">⚠ Residual — Accepted</div>
+      </div>
+
+    </div>
+
+    <div class="cols-2" style="margin-top:14px; gap:14px;">
+      <div class="board-prompt green">
+        <strong>Controls in place:</strong> Data fragmentation, subscription drift, transfer gaps, and account exposure are all addressed by Phase 1. These are material improvements over the prior operating state.
+      </div>
+      <div class="board-prompt amber" style="border-left-color:var(--amber);">
+        <strong style="color:var(--amber);">Residual risks:</strong> Manual update cadence and 7-day visibility lag are known and accepted. These are the primary drivers of the Phase 2 evaluation criteria.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 10 — PHASE 2 GATE
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s10" data-notes="This slide is about capital discipline, not delay. The message is: we are not blocking Phase 2 because it is a bad idea. We are gating it because we have not yet produced the evidence that would justify the investment. SwiftUI + Vision OCR + Foundation Models is a materially more complex build than a local HTML dashboard. Starting before the criteria are met would introduce significant complexity risk at a point when Phase 1 has not yet been validated by repeated operation. Emphasize that the gate criteria are specific and testable — this is not an indefinite deferral. The board should view this as sound capital allocation: commit resources when evidence is available, not before.">
+
+    <div class="label">09 · Phase 2 Decision Gate</div>
+    <h2 class="slide-title">Native Development Requires Evidence — Not Just Ambition</h2>
+    <div class="divider"></div>
+
+    <div class="cols-65-35" style="flex:1; align-items:start; margin-top:8px; gap:20px;">
+
+      <div>
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <div class="gate-status-badge">⏸ Phase 2 — Not Started · Gate Not Cleared</div>
+        </div>
+
+        <div class="flex-col" style="gap:9px;">
+
+          <div class="gate-row">
+            <div class="gate-icon">🔁</div>
+            <div class="gate-text"><strong>3 weekly manual cycles completed</strong> — establish that the operating cadence is real and sustainable before automating it</div>
+          </div>
+
+          <div class="gate-row">
+            <div class="gate-icon">📄</div>
+            <div class="gate-text"><strong>PDF/screenshot ingestion confirmed as the real bottleneck</strong> — not assumed. The manual input step must be demonstrated to be the actual friction point</div>
+          </div>
+
+          <div class="gate-row">
+            <div class="gate-icon">⏱</div>
+            <div class="gate-text"><strong>Time is available for SwiftUI + Vision + Foundation Models</strong> — this is a materially more complex development effort than Phase 1. It requires dedicated capacity</div>
+          </div>
+
+          <div class="gate-row">
+            <div class="gate-icon">🔒</div>
+            <div class="gate-text"><strong>HTML no longer solves the need</strong> — Phase 2 is only justified when the current tool has demonstrably reached its operational ceiling</div>
+          </div>
+
+        </div>
+
+        <div class="board-prompt gold mt-16">
+          <strong>Framing:</strong> This gate is disciplined capital allocation. Each criterion is specific, testable, and time-bounded. Phase 2 is not blocked — it is waiting for evidence that justifies the complexity investment.
+        </div>
+      </div>
+
+      <div class="flex-col" style="gap:12px;">
+        <div class="card glow-accent" style="padding:16px 18px;">
+          <div style="font-size:11px; font-weight:700; color:var(--accent); letter-spacing:.08em; margin-bottom:10px; text-transform:uppercase;">Potential Phase 2 Stack</div>
+          <div class="flex-col" style="gap:0;">
+            <div class="stack-item"><div class="stack-dot"></div><div style="font-size:13px; color:var(--text3);">SwiftUI (native macOS/iOS)</div></div>
+            <div class="stack-item"><div class="stack-dot"></div><div style="font-size:13px; color:var(--text3);">Vision OCR (PDF ingestion)</div></div>
+            <div class="stack-item"><div class="stack-dot"></div><div style="font-size:13px; color:var(--text3);">Foundation Models (classification)</div></div>
+            <div class="stack-item"><div class="stack-dot"></div><div style="font-size:13px; color:var(--text3);">App Intents (Siri / Shortcuts)</div></div>
+            <div class="stack-item"><div class="stack-dot"></div><div style="font-size:13px; color:var(--text3);">Model routing (local inference)</div></div>
+          </div>
+          <div style="margin-top:10px; font-size:11px; color:var(--text3); line-height:1.5; font-style:italic;">Grayed out = not approved. Listed for planning context only.</div>
+        </div>
+        <div class="card" style="padding:14px 16px;">
+          <div style="font-size:11px; font-weight:700; color:var(--amber); letter-spacing:.08em; margin-bottom:6px; text-transform:uppercase;">Complexity Delta</div>
+          <div style="font-size:13px; color:var(--text2); line-height:1.55;">Phase 1: 1 HTML file, 1 developer, local operation.<br><br>Phase 2: multi-framework native app, on-device ML, OCR pipeline. An order-of-magnitude increase in complexity.</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 11 — BOARD DECISION
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s11" data-notes="This is the primary decision slide. The board has three options, and there is a clear recommendation. Option A is the recommended path: maintain Phase 1 operation, accumulate evidence through the weekly cadence, and return to the board in 6–8 weeks with operating data that either confirms or challenges the Phase 2 business case. Option B (limited Phase 2 discovery) is acceptable if the board wants a scoped architecture review without committing to a build. Option C (full native build) is premature and carries material complexity risk given Phase 1 is still in early operating cycles. Make the recommendation clearly and without hedging — this is a decision meeting, not a discussion forum.">
+
+    <div class="label">10 · Board Decision</div>
+    <h2 class="slide-title">Three Options. One Recommendation.</h2>
+    <div class="divider"></div>
+
+    <div class="cols-3" style="flex:1; align-items:start; margin-top:8px;">
+
+      <div class="option-card recommended">
+        <div class="rec-badge">★ Recommended</div>
+        <div class="option-num">Option A</div>
+        <div class="option-title">Maintain Phase 1 · Collect Evidence</div>
+        <div class="option-desc">
+          Operate the dashboard through its weekly cadence for a minimum of 3 complete cycles. Document friction points. Validate whether the current tool meets the ongoing operational need before any further investment.
+          <br><br>
+          <span style="color:var(--green);">✓</span> Zero additional cost<br>
+          <span style="color:var(--green);">✓</span> Builds the evidence base<br>
+          <span style="color:var(--green);">✓</span> Lowest complexity risk<br>
+          <span style="color:var(--green);">✓</span> Returns clear Phase 2 signal<br>
+          <br>
+          <strong style="color:var(--text); font-size:12px;">Review gate: 6–8 weeks</strong>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <div class="option-num">Option B</div>
+        <div class="option-title">Approve Limited Phase 2 Discovery</div>
+        <div class="option-desc">
+          Authorize a scoped architecture review of the Phase 2 stack (SwiftUI, Vision OCR, Foundation Models) without committing to a build. Produces a readiness assessment and effort estimate.
+          <br><br>
+          <span style="color:var(--amber);">◐</span> Low cost, bounded scope<br>
+          <span style="color:var(--amber);">◐</span> Produces a build estimate<br>
+          <span style="color:var(--amber);">◐</span> No execution commitment<br>
+          <span style="color:var(--red);">✗</span> Premature if Phase 1 is still maturing<br>
+          <br>
+          <strong style="color:var(--text); font-size:12px;">Only if Option A confirms bottleneck</strong>
+        </div>
+      </div>
+
+      <div class="option-card">
+        <div class="option-num">Option C</div>
+        <div class="option-title">Approve Full Native-App Build</div>
+        <div class="option-desc">
+          Immediately begin SwiftUI development of a native financial intelligence application. Full Phase 2 scope: OCR pipeline, Foundation Models integration, App Intents.
+          <br><br>
+          <span style="color:var(--red);">✗</span> Gate criteria not yet met<br>
+          <span style="color:var(--red);">✗</span> Phase 1 not yet validated<br>
+          <span style="color:var(--red);">✗</span> High complexity, high effort<br>
+          <span style="color:var(--red);">✗</span> No evidence base yet<br>
+          <br>
+          <strong style="color:var(--red); font-size:12px;">Not recommended at this time</strong>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="board-prompt mt-24">
+      <strong>Board action required:</strong> Ratify Option A. Designate the review trigger date. Confirm that the weekly Sunday ritual is the primary operating obligation between now and the review gate.
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 12 — CLOSING
+  ════════════════════════════════════════ -->
+  <div class="slide" id="s12" data-notes="Close by reinforcing the key principle: this project succeeded because it was disciplined. A working HTML file that is actually used is more valuable than a sophisticated native app that is not. Phase 1 delivered real operational value — in six months, across four institutions, with 145 transactions, 11 tracked cancellation decisions, and a R$122K reconciliation. The board's job now is to let this run, measure it, and decide with evidence. Thank the board and open the floor for questions.">
+
+    <div class="label green">11 · Closing Summary</div>
+
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; max-width:860px;">
+
+      <h2 class="slide-title" style="margin-bottom:24px;">Build Less. Operate More. Decide with Evidence.</h2>
+
+      <p class="closing-quote">
+        <strong>financas-2026 is not a prototype.</strong> It is a working financial control layer that is operational today — covering six months, four institutions, 145 transactions, and a R$122K reconciliation. It runs in Safari with no server and no subscription. It is updated weekly by a human who is accountable to a cadence.
+      </p>
+
+      <p class="closing-quote" style="margin-top:20px;">
+        The board's mandate is simple: <strong>operate it, measure it, and only then scale it.</strong> Phase 2 will earn its approval through evidence — not through engineering enthusiasm or architectural ambition.
+      </p>
+
+    </div>
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:24px;">
+      <span class="pill green">● Phase 1 — Operational</span>
+      <span class="pill amber">⏸ Phase 2 — Gated</span>
+      <span class="pill accent">Review Gate: 6–8 weeks</span>
+      <span class="pill gold">Decision: Option A</span>
+    </div>
+
+    <div class="board-prompt mt-24">
+      <strong>Next action:</strong> Confirm weekly cadence ownership. Set the Phase 2 review date. Open for board questions.
+    </div>
+
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ── NOTES PANEL ── -->
+<div id="notes-panel">
+  <h4>Speaker Notes</h4>
+  <p id="notes-text"></p>
+</div>
+
+<!-- ── CHROME ── -->
+<div id="chrome">
+  <div class="slide-counter" id="slide-counter">Slide 1 of 12</div>
+  <div class="nav-dots" id="nav-dots"></div>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <button id="notes-toggle" onclick="toggleNotes()">Notes</button>
+    <div class="nav-buttons">
+      <button class="nav-btn" onclick="navigate(-1)">← Prev</button>
+      <button class="nav-btn primary" onclick="navigate(1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── DATA ──
+  const TAB_DATA = [
+    {
+      name: 'Overview',
+      look: 'Net position, period summary, top-line chart',
+      question: 'What is my financial state right now?',
+      why: 'Entry point for any board-level discussion. Sets context before drilling into any module. Look for balance trajectory and monthly totals.'
+    },
+    {
+      name: 'Weekly Tracker',
+      look: 'Week-by-week spend bars, 7-day rolling total',
+      question: 'Is my weekly spending pattern stable?',
+      why: 'Identifies spend rhythm anomalies before they become month-end surprises. The board should ask: which weeks showed spikes and why?'
+    },
+    {
+      name: 'Card Transactions',
+      look: '145 entries, categorized, date-sorted',
+      question: 'Where did every card charge go?',
+      why: 'The most granular audit view. 145 transactions form the evidence base for all spend categorization decisions. Supports any line-item challenge.'
+    },
+    {
+      name: 'Subscriptions',
+      look: 'Recurring charges list, monthly cost total',
+      question: 'What am I paying for every month?',
+      why: 'Subscription creep is a silent cost driver. This tab makes every recurring charge visible and reviewable on a fixed schedule.'
+    },
+    {
+      name: 'Banks',
+      look: 'Balance per institution, total liquidity',
+      question: 'How much do I actually hold, and where?',
+      why: 'Consolidated balance view across 4 institutions. Essential for liquidity management and inter-account allocation decisions.'
+    },
+    {
+      name: 'Online Spend',
+      look: 'Digital purchases, platform breakdown',
+      question: 'How much goes to online/digital channels?',
+      why: 'Digital spend is often the fastest-growing and least-reviewed category. This tab isolates it for targeted review.'
+    },
+    {
+      name: 'Cancel Tracker',
+      look: '11 active items, status per service',
+      question: 'What have I decided to cancel — and did it happen?',
+      why: 'Converts cancellation intent into a managed queue. Prevents "I thought I cancelled that" from becoming a recurring charge.'
+    },
+    {
+      name: 'Cash Bridge',
+      look: 'Transfer flow diagram, R$122K reconciliation',
+      question: 'Why is there a gap between activity and balances?',
+      why: 'The highest-value single module. Documents R$122K in inter-account movements that were previously unexplained. This is the audit trail for the biggest reconciliation question.'
+    },
+    {
+      name: 'International',
+      look: 'Remittance history, FX exposure',
+      question: 'What has crossed international accounts?',
+      why: 'International remittances are high-value, low-frequency events that require explicit tracking. This tab makes them visible and traceable.'
+    }
+  ];
+
+  const NOTES = Array.from(document.querySelectorAll('.slide')).map(s => s.dataset.notes || '');
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let current = 0;
+  let notesOpen = false;
+
+  // ── NAV DOTS ──
+  const dotsContainer = document.getElementById('nav-dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsContainer.appendChild(d);
+  });
+
+  function goTo(idx) {
+    if (idx < 0 || idx >= slides.length) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add('out');
+    setTimeout(() => slides[current].classList.remove('out'), 450);
+    current = idx;
+    slides[current].classList.add('active');
+    document.querySelectorAll('.nav-dot').forEach((d, i) => d.classList.toggle('active', i === current));
+    document.getElementById('slide-counter').textContent = `Slide ${current + 1} of ${slides.length}`;
+    document.getElementById('progress').style.width = `${((current + 1) / slides.length) * 100}%`;
+    document.getElementById('notes-text').textContent = NOTES[current];
+
+    // Reset tab selection on slide 5
+    if (current === 4) resetTabDetail();
+  }
+
+  function navigate(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') navigate(-1);
+    if (e.key === 'n' || e.key === 'N') toggleNotes();
+  });
+
+  function toggleNotes() {
+    notesOpen = !notesOpen;
+    document.getElementById('notes-panel').classList.toggle('open', notesOpen);
+    document.getElementById('notes-toggle').style.color = notesOpen ? 'var(--accent)' : '';
+  }
+
+  // Init progress
+  document.getElementById('progress').style.width = `${(1/slides.length)*100}%`;
+  document.getElementById('notes-text').textContent = NOTES[0];
+
+  // ── TAB WALKTHROUGH (Slide 5) ──
+  function renderTabs() {
+    const list = document.getElementById('tab-list');
+    TAB_DATA.forEach((tab, i) => {
+      const row = document.createElement('div');
+      row.className = 'tab-item';
+      row.innerHTML = `
+        <div class="tab-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="tab-name">${tab.name}</div>
+        <div class="tab-look">${tab.question}</div>
+        <div class="tab-why" style="color:var(--text3); font-size:11px;">${tab.why.substring(0,60)}…</div>
+      `;
+      row.onclick = () => selectTab(i, row);
+      list.appendChild(row);
+    });
+  }
+
+  function selectTab(i, rowEl) {
+    document.querySelectorAll('.tab-item').forEach(r => r.classList.remove('selected'));
+    rowEl.classList.add('selected');
+    const tab = TAB_DATA[i];
+    const detail = document.getElementById('tab-detail');
+    detail.innerHTML = `
+      <div class="td-tab">Tab ${String(i+1).padStart(2,'0')} · ${tab.name}</div>
+      <div class="td-q">${tab.question}</div>
+      <div class="td-why"><strong style="color:var(--text); font-weight:600;">What to look at:</strong> ${tab.look}</div>
+      <div class="td-why" style="margin-top:10px;"><strong style="color:var(--text); font-weight:600;">Why it matters:</strong> ${tab.why}</div>
+    `;
+  }
+
+  function resetTabDetail() {
+    document.getElementById('tab-detail').innerHTML = `
+      <div class="td-tab">Click a tab row to inspect</div>
+      <div class="td-q" style="color:var(--text3); font-size:14px; font-weight:400;">Select any tab on the left to see its board-level context and what to highlight during a live demo.</div>
+    `;
+    document.querySelectorAll('.tab-item').forEach(r => r.classList.remove('selected'));
+  }
+
+  renderTabs();
+</script>
+</body>
+</html>

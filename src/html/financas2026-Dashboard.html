@@ -1,0 +1,3870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>financas-2026 · Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0F0F1A;--surface:#16162A;--surface2:#1E1E33;--border:#2A2A44;--border2:#3A3A55;
+  --text:#F0F0F8;--text2:#A0A0C0;--text3:#6060A0;
+  --accent:#7C6AF7;--accent2:#9D8FFF;--accent-glow:rgba(124,106,247,.12);
+  --green:#3ECF8E;--green-dim:rgba(62,207,142,.1);
+  --red:#F06060;--red-dim:rgba(240,96,96,.1);
+  --gold:#D4A84B;--gold-dim:rgba(212,168,75,.1);
+  --amber:#F59E0B;--amber-dim:rgba(245,158,11,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.header h1{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.header .meta{font-size:12px;color:var(--text3);margin-left:auto}
+.badge{padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;letter-spacing:.04em}
+.badge.live{background:var(--green-dim);color:var(--green);border:1px solid rgba(62,207,142,.25)}
+/* ── TABS ── */
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 24px;display:flex;gap:4px;overflow-x:auto}
+.tab-btn{padding:12px 16px;font-size:13px;color:var(--text2);cursor:pointer;
+  border:none;background:none;border-bottom:2px solid transparent;white-space:nowrap;
+  transition:color .15s,border-color .15s;font-weight:500}
+.tab-btn.active,.tab-btn:hover{color:var(--text);border-bottom-color:var(--accent)}
+.tab-btn.active{color:var(--accent)}
+/* ── LAYOUT ── */
+.content{padding:24px;max-width:1400px}
+.panel{display:none}.panel.active{display:block}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.g4,.g3,.g2{grid-template-columns:1fr}}
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.card-title{font-size:11px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.card-value{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.card-sub{font-size:12px;color:var(--text2);margin-top:4px}
+.card.green .card-value{color:var(--green)}
+.card.red .card-value{color:var(--red)}
+.card.gold .card-value{color:var(--gold)}
+.card.accent .card-value{color:var(--accent2)}
+/* ── CHART WRAP ── */
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.chart-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:16px}
+.chart-wrap canvas{display:block}
+/* ── TABLE ── */
+.tbl-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tbl-header{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border)}
+.tbl-title{font-size:14px;font-weight:600}
+.tbl-meta{font-size:12px;color:var(--text3)}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:11px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;
+  padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);background:var(--surface2)}
+.tbl td{padding:11px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--surface2)}
+/* ── DECISION PILLS ── */
+.pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;letter-spacing:.04em}
+.pill.KEEP{background:var(--green-dim);color:var(--green)}
+.pill.CANCEL{background:var(--red-dim);color:var(--red)}
+.pill.REVIEW{background:var(--gold-dim);color:var(--gold)}
+.pill.PAUSE{background:var(--amber-dim);color:var(--amber)}
+.pill.Pending{background:var(--amber-dim);color:var(--amber)}
+.pill.Cancelled{background:var(--green-dim);color:var(--green)}
+.pill.urgent{background:var(--red-dim);color:var(--red);border:1px solid rgba(240,96,96,.3)}
+.pill.high{background:var(--gold-dim);color:var(--gold)}
+.pill.medium{background:var(--amber-dim);color:var(--amber)}
+/* ── MISC ── */
+.num{font-variant-numeric:tabular-nums}
+.right{text-align:right}
+.red-t{color:var(--red)}.green-t{color:var(--green)}.gold-t{color:var(--gold)}.text2{color:var(--text2)}
+.section-title{font-size:15px;font-weight:700;margin-bottom:16px;color:var(--text)}
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0}
+.sync-bar{background:var(--surface2);border-radius:8px;padding:10px 16px;font-size:12px;
+  color:var(--text3);margin-bottom:20px;display:flex;gap:16px;flex-wrap:wrap}
+.sync-bar span{color:var(--text2)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span style="font-size:20px">⬡</span>
+  <h1>financas-2026</h1>
+  <span class="badge live">LIVE</span>
+  <div class="meta" id="sync-meta"></div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="show('overview',this)">📊 Overview</button>
+  <button class="tab-btn" onclick="show('weekly',this)">📅 Weekly</button>
+  <button class="tab-btn" onclick="show('subscriptions',this)">🔄 Subscriptions</button>
+  <button class="tab-btn" onclick="show('cancel',this)">❌ Cancel</button>
+  <button class="tab-btn" onclick="show('banks',this)">🏦 Banks</button>
+  <button class="tab-btn" onclick="show('international',this)">🌍 International</button>
+  <button class="tab-btn" onclick="show('transactions',this)">💳 Transactions</button>
+  <button class="tab-btn" onclick="show('actions',this)">⚡ Actions</button>
+  <button class="tab-btn" onclick="show('nfce',this)">🧾 NFC-e</button>
+  <button class="tab-btn" onclick="show('ipca',this)">📈 IPCA</button>
+  <button class="tab-btn" onclick="show('mercado',this)">💳 Mercado Pago</button>
+</div>
+
+<div class="content">
+
+<!-- ══ OVERVIEW ══ -->
+<div class="panel active" id="panel-overview">
+  <div class="sync-bar" id="overview-sync"></div>
+  <div class="grid g4" id="kpi-cards" style="margin-bottom:20px"></div>
+  <div class="grid g2">
+    <div class="chart-wrap"><div class="chart-title">Monthly Card Spend (BRL)</div>
+      <canvas id="chart-monthly" height="200"></canvas></div>
+    <div class="chart-wrap"><div class="chart-title">Spending by Category</div>
+      <canvas id="chart-cat" height="200"></canvas></div>
+  </div>
+</div>
+
+<!-- ══ WEEKLY ══ -->
+<div class="panel" id="panel-weekly">
+  <div class="chart-wrap" style="margin-bottom:20px">
+    <div class="chart-title">Weekly Card Spend — Jan–Jun 2026</div>
+    <canvas id="chart-weekly" height="180"></canvas>
+  </div>
+  <div class="tbl-wrap">
+    <div class="tbl-header"><span class="tbl-title">Week Detail</span><span class="tbl-meta" id="weekly-total"></span></div>
+    <table class="tbl"><thead><tr>
+      <th>#</th><th>Week Start</th><th class="right">Spend (BRL)</th><th class="right">Transactions</th>
+    </tr></thead><tbody id="weekly-body"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ SUBSCRIPTIONS ══ -->
+<div class="panel" id="panel-subscriptions">
+  <div class="grid g3" style="margin-bottom:20px" id="sub-kpis"></div>
+  <div class="tbl-wrap">
+    <div class="tbl-header"><span class="tbl-title">Active Subscriptions</span><span class="tbl-meta" id="sub-meta"></span></div>
+    <table class="tbl"><thead><tr>
+      <th>Service</th><th>Plan</th><th>Category</th><th class="right">Monthly BRL</th><th>Decision</th>
+    </tr></thead><tbody id="sub-body"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ CANCEL ══ -->
+<div class="panel" id="panel-cancel">
+  <div class="grid g3" style="margin-bottom:20px" id="cancel-kpis"></div>
+  <div class="tbl-wrap">
+    <div class="tbl-header"><span class="tbl-title">Cancel Tracker</span><span class="tbl-meta" id="cancel-meta"></span></div>
+    <table class="tbl"><thead><tr>
+      <th>Service</th><th class="right">Monthly BRL</th><th>Status</th><th>Priority</th><th>Target</th>
+    </tr></thead><tbody id="cancel-body"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ BANKS ══ -->
+<div class="panel" id="panel-banks">
+  <div class="grid g4" style="margin-bottom:20px" id="bank-cards"></div>
+  <div class="tbl-wrap">
+    <div class="tbl-header"><span class="tbl-title">Account Balances</span><span class="tbl-meta">BCB CCS — 10 active institutions</span></div>
+    <table class="tbl"><thead><tr>
+      <th>Institution</th><th class="right">Balance (BRL)</th><th>Status</th>
+    </tr></thead><tbody id="bank-body"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ INTERNATIONAL ══ -->
+<div class="panel" id="panel-international">
+  <div class="grid g4" style="margin-bottom:20px" id="intl-kpis"></div>
+  <div class="tbl-wrap">
+    <div class="tbl-header"><span class="tbl-title">BCB Câmbio 2026 — All Operations</span>
+      <span class="tbl-meta" id="intl-meta"></span></div>
+    <table class="tbl"><thead><tr>
+      <th>Date</th><th>Institution</th><th>Destination</th><th class="right">FCY</th>
+      <th class="right">BRL</th><th>CCY</th><th>Direction</th><th>Nature</th>
+    </tr></thead><tbody id="intl-body"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ TRANSACTIONS ══ -->
+<div class="panel" id="panel-transactions">
+  <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap" id="tx-filters"></div>
+  <div class="tbl-wrap">
+    <div class="tbl-header"><span class="tbl-title">Card Transactions</span><span class="tbl-meta" id="tx-meta"></span></div>
+    <table class="tbl"><thead><tr>
+      <th>Date</th><th>Merchant</th><th>Category</th><th class="right">Amount BRL</th><th>Decision</th>
+    </tr></thead><tbody id="tx-body"></tbody></table>
+  </div>
+</div>
+
+<!-- ══ ACTIONS ══ -->
+<div class="panel" id="panel-actions">
+  <div class="grid g2">
+    <div>
+      <p class="section-title">🔴 URGENT — Act This Week</p>
+      <div id="actions-urgent"></div>
+    </div>
+    <div>
+      <p class="section-title">🟡 HIGH — This Month</p>
+      <div id="actions-high"></div>
+    </div>
+  </div>
+  <hr class="divider">
+  <p class="section-title">📋 Sunday Ritual Checklist</p>
+  <div id="ritual-checklist"></div>
+</div>
+
+
+<!-- ══ NFC-e ══ -->
+<div class="panel" id="panel-nfce">
+  <div class="grid g4" style="margin-bottom:20px" id="nfce-kpis"></div>
+  <div class="grid g2" style="margin-bottom:20px">
+    <div class="chart-wrap">
+      <div class="chart-title">Gastos NFC-e por Categoria (2020–2026)</div>
+      <canvas id="chart-nfce-cat" height="220"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">Gastos NFC-e Mensais (últimos 24 meses)</div>
+      <canvas id="chart-nfce-mo" height="220"></canvas>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <a href="../nfce/nfce-dashboard.html" target="_blank"
+       style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;
+              background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+              color:var(--accent2);text-decoration:none;font-size:13px;font-weight:600">
+      🧾 Abrir NFC-e Dashboard completo →
+    </a>
+    <a href="../nfce/inflation-tracker.html" target="_blank"
+       style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;
+              background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+              color:var(--gold);text-decoration:none;font-size:13px;font-weight:600">
+      📈 Abrir IPCA Tracker →
+    </a>
+  </div>
+</div>
+
+<!-- ══ IPCA ══ -->
+<div class="panel" id="panel-ipca">
+  <div class="grid g4" style="margin-bottom:20px" id="ipca-kpis"></div>
+  <div class="chart-wrap" style="margin-bottom:20px">
+    <div class="chart-title">Índice Acumulado · Base 2020 = 100</div>
+    <canvas id="chart-ipca" height="200"></canvas>
+  </div>
+  <div style="text-align:center;margin-top:8px">
+    <a href="../nfce/inflation-tracker.html" target="_blank"
+       style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+              background:var(--surface2);border:1px solid var(--border2);border-radius:8px;
+              color:var(--gold);text-decoration:none;font-size:13px;font-weight:600">
+      📈 Abrir rastreador completo com entrada manual de preços →
+    </a>
+  </div>
+</div>
+
+<div class="panel" id="panel-mercado" style="display:none">
+  <div class="grid g4" style="margin-bottom:20px" id="mp-kpis"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    <div class="chart-wrap">
+      <div class="chart-title">💳 Fatura por Mês (Fev–Jun 2026)</div>
+      <canvas id="chart-mp-monthly" height="200"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">💳 Fatura por Categoria</div>
+      <canvas id="chart-mp-cat" height="200"></canvas>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    <div class="chart-wrap">
+      <div class="chart-title">🛒 Mercado Livre por Categoria</div>
+      <canvas id="chart-ml-cat" height="200"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-title">🍕 iFood — Pedidos 2026</div>
+      <div id="ifood-list" style="max-height:260px;overflow-y:auto;padding:8px"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-weight:700;color:var(--text)">💳 Transações MP Cartão — Fev–Jun 2026</span>
+      <span class="pill REVIEW" id="mp-tx-meta" style="font-size:12px"></span>
+    </div>
+    <div style="overflow-x:auto;max-height:400px;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead style="position:sticky;top:0;background:var(--surface2)">
+          <tr><th style="padding:8px;text-align:left;color:var(--text2)">Data</th>
+              <th style="padding:8px;text-align:left;color:var(--text2)">Fatura</th>
+              <th style="padding:8px;text-align:left;color:var(--text2)">Estabelecimento</th>
+              <th style="padding:8px;text-align:right;color:var(--text2)">Valor</th>
+              <th style="padding:8px;text-align:left;color:var(--text2)">Categoria</th>
+              <th style="padding:8px;text-align:center;color:var(--text2)">Intl</th></tr>
+        </thead>
+        <tbody id="mp-tx-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+/* SYNC:START */
+const DATA = {
+  "generated": "2026-07-14T01:44:07",
+  "kpis": {
+    "total_spend_6mo": 10231.52,
+    "monthly_avg": 1461.65,
+    "confirmed_monthly_sub": 1716.39,
+    "cancel_savings_monthly": 365.8,
+    "total_liquidity": 23196.9,
+    "bb_brasil_balance": 0.0,
+    "intl_outbound_2026": 173215.44,
+    "as_of": "2026-07-14"
+  },
+  "banks": [
+    {
+      "account": "BB Brasil",
+      "institution": "BB Brasil",
+      "balance": 0.0,
+      "currency": "BRL",
+      "updated": "2026-07-13 00:00:00",
+      "notes": "\u2705 Confirmed \u00b7 Checking extrato Jul/2026 ends R$0 \u00b7 Rende F\u00e1cil balance not in export \u00b7 Account mislabel 6627102 cleared"
+    },
+    {
+      "account": "Mercado Pago",
+      "institution": "Mercado Pago",
+      "balance": 4262.23,
+      "currency": "BRL",
+      "updated": "2026-07-12 00:00:00",
+      "notes": "\u2705 Confirmed \u00b7 Extrato MP PDF 01\u201312/07/2026 \u00b7 Saldo final R$4.262,23"
+    },
+    {
+      "account": "Banco Inter",
+      "institution": "Banco Inter",
+      "balance": 18934.67,
+      "currency": "BRL",
+      "updated": "2026-07-13 00:00:00",
+      "notes": "\u2705 Confirmed \u00b7 Extrato 07\u201313/07/2026 \u00b7 Conta 662710-2 \u00b7 Total R$18.934,67 (disp. 18.922,07 + bloq. 12,60)"
+    },
+    {
+      "account": "BCB Registrato",
+      "institution": "BCB Registrato",
+      "balance": 0.0,
+      "currency": "BRL",
+      "updated": "2026-07-02 00:00:00",
+      "notes": "\u26a0 Registry only \u2014 no balance in CCS report"
+    }
+  ],
+  "weekly": [
+    {
+      "week": "1",
+      "period": "2026-01-05",
+      "spend": 1032.06,
+      "txs": 14.0,
+      "notes": "Inclui 11 lan\u00e7amentos pr\u00e9-per\u00edodo (dez-2025 + in\u00edcio jan, R$878.68)"
+    },
+    {
+      "week": "2",
+      "period": "2026-01-12",
+      "spend": 137.16,
+      "txs": 2.0,
+      "notes": ""
+    },
+    {
+      "week": "3",
+      "period": "2026-01-19",
+      "spend": 1806.44,
+      "txs": 3.0,
+      "notes": ""
+    },
+    {
+      "week": "4",
+      "period": "2026-01-26",
+      "spend": 624.53,
+      "txs": 2.0,
+      "notes": ""
+    },
+    {
+      "week": "5",
+      "period": "2026-02-02",
+      "spend": 402.9999999999999,
+      "txs": 3.0,
+      "notes": ""
+    },
+    {
+      "week": "6",
+      "period": "2026-02-09",
+      "spend": 71.65,
+      "txs": 2.0,
+      "notes": ""
+    },
+    {
+      "week": "7",
+      "period": "2026-02-16",
+      "spend": 646.47,
+      "txs": 2.0,
+      "notes": ""
+    },
+    {
+      "week": "8",
+      "period": "2026-02-23",
+      "spend": 99.9,
+      "txs": 1.0,
+      "notes": ""
+    },
+    {
+      "week": "9",
+      "period": "2026-03-02",
+      "spend": 185.13,
+      "txs": 3.0,
+      "notes": ""
+    },
+    {
+      "week": "10",
+      "period": "2026-03-09",
+      "spend": 133.68,
+      "txs": 2.0,
+      "notes": ""
+    },
+    {
+      "week": "11",
+      "period": "2026-03-16",
+      "spend": 752.36,
+      "txs": 3.0,
+      "notes": ""
+    },
+    {
+      "week": "13",
+      "period": "2026-03-30",
+      "spend": 400.09,
+      "txs": 4.0,
+      "notes": ""
+    },
+    {
+      "week": "14",
+      "period": "2026-04-06",
+      "spend": 95.21000000000001,
+      "txs": 3.0,
+      "notes": ""
+    },
+    {
+      "week": "15",
+      "period": "2026-04-13",
+      "spend": 103.5,
+      "txs": 1.0,
+      "notes": ""
+    },
+    {
+      "week": "16",
+      "period": "2026-04-20",
+      "spend": 1163.94,
+      "txs": 4.0,
+      "notes": ""
+    },
+    {
+      "week": "17",
+      "period": "2026-04-27",
+      "spend": 677.26,
+      "txs": 5.0,
+      "notes": ""
+    },
+    {
+      "week": "18",
+      "period": "2026-05-04",
+      "spend": 172.68,
+      "txs": 3.0,
+      "notes": ""
+    },
+    {
+      "week": "19",
+      "period": "2026-05-11",
+      "spend": 183.67,
+      "txs": 2.0,
+      "notes": ""
+    },
+    {
+      "week": "20",
+      "period": "2026-05-18",
+      "spend": 800.42,
+      "txs": 5.0,
+      "notes": ""
+    },
+    {
+      "week": "21",
+      "period": "2026-05-25",
+      "spend": 317.25,
+      "txs": 3.0,
+      "notes": ""
+    },
+    {
+      "week": "22",
+      "period": "2026-06-01",
+      "spend": 425.12,
+      "txs": 5.0,
+      "notes": ""
+    }
+  ],
+  "monthly": [
+    {
+      "month": "2026-01",
+      "total": 878.68,
+      "count": 11
+    },
+    {
+      "month": "2026-02",
+      "total": 2993.7200000000003,
+      "count": 11
+    },
+    {
+      "month": "2026-03",
+      "total": 948.8100000000001,
+      "count": 7
+    },
+    {
+      "month": "2026-04",
+      "total": 1364.24,
+      "count": 11
+    },
+    {
+      "month": "2026-05",
+      "total": 2146.93,
+      "count": 14
+    },
+    {
+      "month": "2026-06",
+      "total": 1899.1399999999999,
+      "count": 18
+    }
+  ],
+  "category_totals": [
+    {
+      "category": "AI - Agent/Credits",
+      "total": 2510.56
+    },
+    {
+      "category": "AI - General/Coding",
+      "total": 1407.6
+    },
+    {
+      "category": "AI - General",
+      "total": 1380.96
+    },
+    {
+      "category": "AI - Research",
+      "total": 650.99
+    },
+    {
+      "category": "AI API/Credits",
+      "total": 622.67
+    },
+    {
+      "category": "AI - Research/Apple-billed",
+      "total": 599.4
+    },
+    {
+      "category": "Productivity/Automation",
+      "total": 524.63
+    },
+    {
+      "category": "Productivity",
+      "total": 509.0
+    },
+    {
+      "category": "AI - Coding",
+      "total": 335.43
+    },
+    {
+      "category": "AI - Desktop Automation",
+      "total": 272.21
+    },
+    {
+      "category": "Media/Google",
+      "total": 269.0
+    },
+    {
+      "category": "Apple/Cloud",
+      "total": 228.9
+    },
+    {
+      "category": "Developer",
+      "total": 215.2
+    },
+    {
+      "category": "Infrastructure",
+      "total": 191.05
+    },
+    {
+      "category": "AI - Unknown",
+      "total": 117.99
+    },
+    {
+      "category": "AI API/Router",
+      "total": 113.78
+    },
+    {
+      "category": "AI/App Unknown",
+      "total": 111.11
+    },
+    {
+      "category": "AI/Productivity",
+      "total": 96.99
+    },
+    {
+      "category": "Apple/Media",
+      "total": 63.8
+    },
+    {
+      "category": "Developer/Unknown",
+      "total": 10.25
+    }
+  ],
+  "subscriptions": [
+    {
+      "service": "Claude",
+      "monthly_brl": 92.0,
+      "currency": "BRL",
+      "source": "Direct AI",
+      "email": "automacao.giovannini@gmail.com",
+      "plan": "Pro",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Claude",
+      "monthly_brl": 92.0,
+      "currency": "BRL",
+      "source": "Direct AI",
+      "email": "cadastros.online1979@gmail.com",
+      "plan": "Pro",
+      "decision": "KEEP"
+    },
+    {
+      "service": "ChatGPT",
+      "monthly_brl": 20.0,
+      "currency": "USD",
+      "source": "Direct AI",
+      "email": "giovannini.eduardo@gmail.com",
+      "plan": "Plus",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Google",
+      "monthly_brl": 96.99,
+      "currency": "BRL",
+      "source": "Direct AI",
+      "email": "cadastros.online1979@gmail.com",
+      "plan": "Pro",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Manus",
+      "monthly_brl": 30.0,
+      "currency": "UNKNOWN",
+      "source": "Direct AI",
+      "email": "cadastro.giovannini@gmail.com",
+      "plan": "Unknown / credits",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Manus",
+      "monthly_brl": 30.0,
+      "currency": "UNKNOWN",
+      "source": "Direct AI",
+      "email": "automacao.giovannini@gmail.com",
+      "plan": "Unknown / credits",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Cursor",
+      "monthly_brl": 20.0,
+      "currency": "USD",
+      "source": "Direct AI",
+      "email": "giovannini.eduardo@gmail.com",
+      "plan": "Pro",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Desktop Commander",
+      "monthly_brl": 0.0,
+      "currency": "UNKNOWN",
+      "source": "Direct AI",
+      "email": "automacao.giovannini@gmail.com",
+      "plan": "Unlimited",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Filmora9",
+      "monthly_brl": 184.9,
+      "currency": "BRL",
+      "source": "Apple",
+      "email": "Unknown",
+      "plan": "Annual Subscription",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Grok",
+      "monthly_brl": 149.9,
+      "currency": "BRL",
+      "source": "Apple",
+      "email": "Unknown",
+      "plan": "SuperGrok",
+      "decision": "KEEP"
+    },
+    {
+      "service": "iCloud+",
+      "monthly_brl": 19.9,
+      "currency": "BRL",
+      "source": "Apple",
+      "email": "Unknown",
+      "plan": "200 GB storage",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Microsoft 365 Personal",
+      "monthly_brl": 509.0,
+      "currency": "BRL",
+      "source": "Apple",
+      "email": "Unknown",
+      "plan": "Personal",
+      "decision": "KEEP"
+    },
+    {
+      "service": "NordVPN",
+      "monthly_brl": 339.9,
+      "currency": "BRL",
+      "source": "Apple",
+      "email": "Unknown",
+      "plan": "Auto-renewable Subscription",
+      "decision": "KEEP"
+    },
+    {
+      "service": "Perplexity",
+      "monthly_brl": 99.9,
+      "currency": "BRL",
+      "source": "Apple",
+      "email": "Unknown",
+      "plan": "Perplexity Pro for Mac",
+      "decision": "KEEP"
+    },
+    {
+      "service": "TuneIn Radio",
+      "monthly_brl": 31.9,
+      "currency": "BRL",
+      "source": "Apple",
+      "email": "Unknown",
+      "plan": "TuneIn Premium",
+      "decision": "KEEP"
+    }
+  ],
+  "cancel_tracker": [
+    {
+      "service": "Claude",
+      "monthly_brl": 92.0,
+      "status": "Pending",
+      "priority": "High",
+      "target": "Jul 2026",
+      "notes": "Duplicate Claude account; overlaps ChatGPT/Cursor/other Claude"
+    },
+    {
+      "service": "Claude",
+      "monthly_brl": 92.0,
+      "status": "Pending",
+      "priority": "High",
+      "target": "Jul 2026",
+      "notes": "Second Claude Pro account; pure duplicate"
+    },
+    {
+      "service": "Grok",
+      "monthly_brl": 149.9,
+      "status": "Pending",
+      "priority": "High",
+      "target": "Jul 2026",
+      "notes": "High overlap with ChatGPT/Claude/Google"
+    },
+    {
+      "service": "TuneIn Radio",
+      "monthly_brl": 31.9,
+      "status": "Pending",
+      "priority": "Low",
+      "target": "Jul 2026",
+      "notes": "Non-essential recurring subscription"
+    },
+    {
+      "service": "TOTAL MONTHLY SAVINGS IF ALL CANCELLED",
+      "monthly_brl": 0.0,
+      "status": "",
+      "priority": "",
+      "target": "",
+      "notes": ""
+    }
+  ],
+  "international": {
+    "total_brl": 173215.44,
+    "ops": [
+      {
+        "date": "",
+        "tipo": "2026-01-26 00:00:00",
+        "currency": "Banco Top\u00e1zio",
+        "amount_fx": 0.0,
+        "amount_brl": 200.0,
+        "rate": 1071.22,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-01-27 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3000.0,
+        "rate": 15886.01,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-01-30 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3000.0,
+        "rate": 16063.89,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-02-09 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3000.0,
+        "rate": 15868.79,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-02-11 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3000.0,
+        "rate": 15789.96,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-03-03 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3000.0,
+        "rate": 16024.35,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-03-13 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3000.0,
+        "rate": 15877.18,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-03-18 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3000.0,
+        "rate": 15963.15,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-04-22 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3000.0,
+        "rate": 15878.08,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-04-30 00:00:00",
+        "currency": "Banco Top\u00e1zio",
+        "amount_fx": 0.0,
+        "amount_brl": 100.0,
+        "rate": 503.62,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-07 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3000.0,
+        "rate": 15132.89,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-07 00:00:00",
+        "currency": "Banco Inter",
+        "amount_fx": 0.0,
+        "amount_brl": 5000.0,
+        "rate": 24939.84,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-11 00:00:00",
+        "currency": "Banco Inter",
+        "amount_fx": 0.0,
+        "amount_brl": 15000.0,
+        "rate": 74340.4,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-15 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 500.0,
+        "rate": 2577.87,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-15 00:00:00",
+        "currency": "Wise Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 250.0,
+        "rate": 1246.27,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-18 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 200.0,
+        "rate": 1019.15,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-18 00:00:00",
+        "currency": "Wise Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3834.82,
+        "rate": 19195.81,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-19 00:00:00",
+        "currency": "Banco Top\u00e1zio",
+        "amount_fx": 0.0,
+        "amount_brl": 1000.0,
+        "rate": 5114.85,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-20 00:00:00",
+        "currency": "Banco Top\u00e1zio",
+        "amount_fx": 0.0,
+        "amount_brl": 6212.32,
+        "rate": 31651.83,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-22 00:00:00",
+        "currency": "Banco Top\u00e1zio",
+        "amount_fx": 0.0,
+        "amount_brl": 0.0,
+        "rate": 45000.0,
+        "destino": "BRL"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-26 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 10000.0,
+        "rate": 51027.68,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-28 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 5000.0,
+        "rate": 25650.76,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-05-28 00:00:00",
+        "currency": "Banco Top\u00e1zio",
+        "amount_fx": 0.0,
+        "amount_brl": 20000.0,
+        "rate": 101772.38,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-06-05 00:00:00",
+        "currency": "Wise Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 100.0,
+        "rate": 514.21,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-06-05 00:00:00",
+        "currency": "Banco Top\u00e1zio",
+        "amount_fx": 0.0,
+        "amount_brl": 0.0,
+        "rate": 78323.92,
+        "destino": "BRL"
+      },
+      {
+        "date": "",
+        "tipo": "2026-06-05 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 0.0,
+        "rate": 73857.0,
+        "destino": "BRL"
+      },
+      {
+        "date": "",
+        "tipo": "2026-06-16 00:00:00",
+        "currency": "Ouribank",
+        "amount_fx": 0.0,
+        "amount_brl": 0.0,
+        "rate": 25000.0,
+        "destino": "BRL"
+      },
+      {
+        "date": "",
+        "tipo": "2026-06-19 00:00:00",
+        "currency": "Banco Top\u00e1zio",
+        "amount_fx": 0.0,
+        "amount_brl": 0.0,
+        "rate": 52441.91,
+        "destino": "BRL"
+      },
+      {
+        "date": "",
+        "tipo": "2026-06-22 00:00:00",
+        "currency": "BB Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 46229.38,
+        "rate": 241545.87,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-06-22 00:00:00",
+        "currency": "Wise Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 17000.0,
+        "rate": 87442.26,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-06-22 00:00:00",
+        "currency": "Wise Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 7454.1,
+        "rate": 38396.86,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2026-06-26 00:00:00",
+        "currency": "Wise Brasil",
+        "amount_fx": 0.0,
+        "amount_brl": 3834.82,
+        "rate": 19195.81,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "\u2500\u2500\u2500\u2500 2024 Historical Travel FX (context only) \u2500\u2500\u2500\u2500",
+        "currency": "",
+        "amount_fx": 0.0,
+        "amount_brl": 0.0,
+        "rate": 0.0,
+        "destino": ""
+      },
+      {
+        "date": "",
+        "tipo": "2024-08-27 00:00:00",
+        "currency": "Daycoval",
+        "amount_fx": 0.0,
+        "amount_brl": 800.0,
+        "rate": 5618.2,
+        "destino": "CHF"
+      },
+      {
+        "date": "",
+        "tipo": "2024-08-27 00:00:00",
+        "currency": "Daycoval",
+        "amount_fx": 0.0,
+        "amount_brl": 2000.0,
+        "rate": 11473.79,
+        "destino": "USD"
+      },
+      {
+        "date": "",
+        "tipo": "2024-11-19 00:00:00",
+        "currency": "Daycoval",
+        "amount_fx": 0.0,
+        "amount_brl": 1500.0,
+        "rate": 10534.12,
+        "destino": "CHF"
+      },
+      {
+        "date": "",
+        "tipo": "OUTBOUND 2026",
+        "currency": "",
+        "amount_fx": 0.0,
+        "amount_brl": 0.0,
+        "rate": 0.0,
+        "destino": ""
+      },
+      {
+        "date": "",
+        "tipo": "INBOUND 2026",
+        "currency": "",
+        "amount_fx": 0.0,
+        "amount_brl": 0.0,
+        "rate": 0.0,
+        "destino": ""
+      }
+    ]
+  },
+  "card_transactions": [
+    {
+      "date": "2025-12-05",
+      "invoice": "2026-01",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "REVIEW",
+      "amount": 110.54
+    },
+    {
+      "date": "2025-12-06",
+      "invoice": "2026-01",
+      "merchant": "Paddle.net OnlineTLS",
+      "category": "Developer/Unknown",
+      "decision": "REVIEW",
+      "amount": 10.25
+    },
+    {
+      "date": "2025-12-08",
+      "invoice": "2026-01",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 21.9
+    },
+    {
+      "date": "2025-12-09",
+      "invoice": "2026-01",
+      "merchant": "GitHub, Inc.",
+      "category": "Developer",
+      "decision": "REVIEW",
+      "amount": 56.1
+    },
+    {
+      "date": "2025-12-10",
+      "invoice": "2026-01",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 19.9
+    },
+    {
+      "date": "2025-12-14",
+      "invoice": "2026-01",
+      "merchant": "AI-PRO.ORG",
+      "category": "AI - Unknown",
+      "decision": "CANCEL",
+      "amount": 117.99
+    },
+    {
+      "date": "2025-12-20",
+      "invoice": "2026-01",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "KEEP",
+      "amount": 114.27
+    },
+    {
+      "date": "2025-12-24",
+      "invoice": "2026-01",
+      "merchant": "Manus AI",
+      "category": "AI - Agent/Credits",
+      "decision": "CANCEL",
+      "amount": 224.43
+    },
+    {
+      "date": "2026-01-02",
+      "invoice": "2026-01",
+      "merchant": "Apple.com/Bill",
+      "category": "AI - Research/Apple-billed",
+      "decision": "KEEP",
+      "amount": 99.9
+    },
+    {
+      "date": "2026-01-02",
+      "invoice": "2026-01",
+      "merchant": "Manus AI",
+      "category": "AI - Agent/Credits",
+      "decision": "CANCEL",
+      "amount": 41.51
+    },
+    {
+      "date": "2026-01-04",
+      "invoice": "2026-01",
+      "merchant": "Manus AI",
+      "category": "AI - Agent/Credits",
+      "decision": "CANCEL",
+      "amount": 61.89
+    },
+    {
+      "date": "2026-01-08",
+      "invoice": "2026-02",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "KEEP",
+      "amount": 111.58
+    },
+    {
+      "date": "2026-01-08",
+      "invoice": "2026-02",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 21.9
+    },
+    {
+      "date": "2026-01-10",
+      "invoice": "2026-02",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 19.9
+    },
+    {
+      "date": "2026-01-14",
+      "invoice": "2026-02",
+      "merchant": "Manus AI",
+      "category": "AI - Agent/Credits",
+      "decision": "CANCEL",
+      "amount": 25.79
+    },
+    {
+      "date": "2026-01-17",
+      "invoice": "2026-02",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "REVIEW",
+      "amount": 111.37
+    },
+    {
+      "date": "2026-01-19",
+      "invoice": "2026-02",
+      "merchant": "LEMSQZY Pineapple App",
+      "category": "AI/App Unknown",
+      "decision": "CANCEL",
+      "amount": 111.11
+    },
+    {
+      "date": "2026-01-21",
+      "invoice": "2026-02",
+      "merchant": "Claude.ai Subscription",
+      "category": "AI - General/Coding",
+      "decision": "CANCEL",
+      "amount": 1138.5
+    },
+    {
+      "date": "2026-01-21",
+      "invoice": "2026-02",
+      "merchant": "Manus AI",
+      "category": "AI - Agent/Credits",
+      "decision": "CANCEL",
+      "amount": 556.83
+    },
+    {
+      "date": "2026-01-27",
+      "invoice": "2026-02",
+      "merchant": "Raycast.com",
+      "category": "Productivity/Automation",
+      "decision": "REVIEW",
+      "amount": 524.63
+    },
+    {
+      "date": "2026-01-30",
+      "invoice": "2026-02",
+      "merchant": "Apple.com/Bill",
+      "category": "AI - Research/Apple-billed",
+      "decision": "KEEP",
+      "amount": 99.9
+    },
+    {
+      "date": "2026-02-03",
+      "invoice": "2026-02",
+      "merchant": "Desktop Commander",
+      "category": "AI - Desktop Automation",
+      "decision": "CANCEL",
+      "amount": 272.21
+    },
+    {
+      "date": "2026-02-05",
+      "invoice": "2026-03",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "KEEP",
+      "amount": 108.89
+    },
+    {
+      "date": "2026-02-08",
+      "invoice": "2026-03",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 21.9
+    },
+    {
+      "date": "2026-02-10",
+      "invoice": "2026-03",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 19.9
+    },
+    {
+      "date": "2026-02-14",
+      "invoice": "2026-03",
+      "merchant": "Anthropic",
+      "category": "AI - General/Coding",
+      "decision": "CANCEL",
+      "amount": 51.75
+    },
+    {
+      "date": "2026-02-17",
+      "invoice": "2026-03",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "REVIEW",
+      "amount": 108.27
+    },
+    {
+      "date": "2026-02-21",
+      "invoice": "2026-03",
+      "merchant": "Manus AI",
+      "category": "AI - Agent/Credits",
+      "decision": "CANCEL",
+      "amount": 538.2
+    },
+    {
+      "date": "2026-02-28",
+      "invoice": "2026-03",
+      "merchant": "Apple.com/Bill",
+      "category": "AI - Research/Apple-billed",
+      "decision": "KEEP",
+      "amount": 99.9
+    },
+    {
+      "date": "2026-03-05",
+      "invoice": "2026-04",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "KEEP",
+      "amount": 108.47
+    },
+    {
+      "date": "2026-03-08",
+      "invoice": "2026-04",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 21.9
+    },
+    {
+      "date": "2026-03-08",
+      "invoice": "2026-04",
+      "merchant": "GitHub, Inc.",
+      "category": "Developer",
+      "decision": "REVIEW",
+      "amount": 54.76
+    },
+    {
+      "date": "2026-03-10",
+      "invoice": "2026-04",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 19.9
+    },
+    {
+      "date": "2026-03-10",
+      "invoice": "2026-04",
+      "merchant": "OpenRouter, Inc.",
+      "category": "AI API/Router",
+      "decision": "PAUSE",
+      "amount": 113.78
+    },
+    {
+      "date": "2026-03-17",
+      "invoice": "2026-04",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "REVIEW",
+      "amount": 108.89
+    },
+    {
+      "date": "2026-03-20",
+      "invoice": "2026-04",
+      "merchant": "Google Brasil Pagamen",
+      "category": "AI/Productivity",
+      "decision": "REVIEW",
+      "amount": 96.99
+    },
+    {
+      "date": "2026-03-21",
+      "invoice": "2026-04",
+      "merchant": "Manus AI",
+      "category": "AI - Agent/Credits",
+      "decision": "CANCEL",
+      "amount": 546.48
+    },
+    {
+      "date": "2026-03-30",
+      "invoice": "2026-04",
+      "merchant": "Grok XAI",
+      "category": "AI - General",
+      "decision": "CANCEL",
+      "amount": 81.36
+    },
+    {
+      "date": "2026-03-30",
+      "invoice": "2026-04",
+      "merchant": "Apple.com/Bill",
+      "category": "AI - Research/Apple-billed",
+      "decision": "KEEP",
+      "amount": 99.9
+    },
+    {
+      "date": "2026-04-01",
+      "invoice": "2026-04",
+      "merchant": "Cursor AI Powered IDE",
+      "category": "AI - Coding",
+      "decision": "KEEP",
+      "amount": 111.81
+    },
+    {
+      "date": "2026-04-05",
+      "invoice": "2026-05",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "KEEP",
+      "amount": 107.02
+    },
+    {
+      "date": "2026-04-08",
+      "invoice": "2026-05",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 21.9
+    },
+    {
+      "date": "2026-04-08",
+      "invoice": "2026-05",
+      "merchant": "GitHub, Inc.",
+      "category": "Developer",
+      "decision": "REVIEW",
+      "amount": 53.41
+    },
+    {
+      "date": "2026-04-10",
+      "invoice": "2026-05",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 19.9
+    },
+    {
+      "date": "2026-04-17",
+      "invoice": "2026-05",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "REVIEW",
+      "amount": 103.5
+    },
+    {
+      "date": "2026-04-20",
+      "invoice": "2026-05",
+      "merchant": "Microsoft Store",
+      "category": "Productivity",
+      "decision": "REVIEW",
+      "amount": 509.0
+    },
+    {
+      "date": "2026-04-21",
+      "invoice": "2026-05",
+      "merchant": "Manus AI",
+      "category": "AI - Agent/Credits",
+      "decision": "CANCEL",
+      "amount": 515.43
+    },
+    {
+      "date": "2026-04-23",
+      "invoice": "2026-05",
+      "merchant": "Cloudflare",
+      "category": "Infrastructure",
+      "decision": "REVIEW",
+      "amount": 107.61
+    },
+    {
+      "date": "2026-04-24",
+      "invoice": "2026-05",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Media",
+      "decision": "CANCEL",
+      "amount": 31.9
+    },
+    {
+      "date": "2026-04-27",
+      "invoice": "2026-05",
+      "merchant": "Perplexity.ai",
+      "category": "AI - Research",
+      "decision": "KEEP",
+      "amount": 103.71
+    },
+    {
+      "date": "2026-04-30",
+      "invoice": "2026-05",
+      "merchant": "Perplexity.ai",
+      "category": "AI - Research",
+      "decision": "CANCEL",
+      "amount": 155.25
+    },
+    {
+      "date": "2026-04-30",
+      "invoice": "2026-05",
+      "merchant": "Apple.com/Bill",
+      "category": "AI - Research/Apple-billed",
+      "decision": "KEEP",
+      "amount": 99.9
+    },
+    {
+      "date": "2026-05-01",
+      "invoice": "2026-05",
+      "merchant": "Cursor AI Powered IDE",
+      "category": "AI - Coding",
+      "decision": "KEEP",
+      "amount": 111.81
+    },
+    {
+      "date": "2026-05-01",
+      "invoice": "2026-05",
+      "merchant": "OpenAI ChatGPT Credit",
+      "category": "AI API/Credits",
+      "decision": "PAUSE",
+      "amount": 206.59
+    },
+    {
+      "date": "2026-05-06",
+      "invoice": "2026-06",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "KEEP",
+      "amount": 101.85
+    },
+    {
+      "date": "2026-05-08",
+      "invoice": "2026-06",
+      "merchant": "GitHub, Inc.",
+      "category": "Developer",
+      "decision": "REVIEW",
+      "amount": 50.93
+    },
+    {
+      "date": "2026-05-10",
+      "invoice": "2026-06",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Cloud",
+      "decision": "KEEP",
+      "amount": 19.9
+    },
+    {
+      "date": "2026-05-16",
+      "invoice": "2026-06",
+      "merchant": "Perplexity.ai",
+      "category": "AI - Research",
+      "decision": "REVIEW",
+      "amount": 78.72
+    },
+    {
+      "date": "2026-05-17",
+      "invoice": "2026-06",
+      "merchant": "OpenAI ChatGPT Subscription",
+      "category": "AI - General",
+      "decision": "REVIEW",
+      "amount": 104.95
+    },
+    {
+      "date": "2026-05-18",
+      "invoice": "2026-06",
+      "merchant": "Cloudflare",
+      "category": "Infrastructure",
+      "decision": "REVIEW",
+      "amount": 83.44
+    },
+    {
+      "date": "2026-05-19",
+      "invoice": "2026-06",
+      "merchant": "Google YouTube",
+      "category": "Media/Google",
+      "decision": "CANCEL",
+      "amount": 269.0
+    },
+    {
+      "date": "2026-05-20",
+      "invoice": "2026-06",
+      "merchant": "OpenAI ChatGPT Credit",
+      "category": "AI API/Credits",
+      "decision": "PAUSE",
+      "amount": 208.66
+    },
+    {
+      "date": "2026-05-23",
+      "invoice": "2026-06",
+      "merchant": "OpenAI ChatGPT Credit",
+      "category": "AI API/Credits",
+      "decision": "PAUSE",
+      "amount": 207.42
+    },
+    {
+      "date": "2026-05-24",
+      "invoice": "2026-06",
+      "merchant": "Apple.com/Bill",
+      "category": "Apple/Media",
+      "decision": "CANCEL",
+      "amount": 31.9
+    },
+    {
+      "date": "2026-05-28",
+      "invoice": "2026-06",
+      "merchant": "Anthropic",
+      "category": "AI - General/Coding",
+      "decision": "CANCEL",
+      "amount": 103.5
+    },
+    {
+      "date": "2026-05-30",
+      "invoice": "2026-06",
+      "merchant": "Apple.com/Bill",
+      "category": "AI - Research/Apple-billed",
+      "decision": "KEEP",
+      "amount": 99.9
+    },
+    {
+      "date": "2026-05-30",
+      "invoice": "2026-06",
+      "merchant": "Claude.ai Subscription",
+      "category": "AI - General/Coding",
+      "decision": "CANCEL",
+      "amount": 113.85
+    },
+    {
+      "date": "2026-06-01",
+      "invoice": "2026-06",
+      "merchant": "Perplexity.ai",
+      "category": "AI - Research",
+      "decision": "REVIEW",
+      "amount": 78.56
+    },
+    {
+      "date": "2026-06-01",
+      "invoice": "2026-06",
+      "merchant": "Cursor AI Powered IDE",
+      "category": "AI - Coding",
+      "decision": "KEEP",
+      "amount": 111.81
+    },
+    {
+      "date": "2026-06-04",
+      "invoice": "2026-06",
+      "merchant": "Perplexity.ai",
+      "category": "AI - Research",
+      "decision": "CANCEL",
+      "amount": 78.25
+    },
+    {
+      "date": "2026-06-04",
+      "invoice": "2026-06",
+      "merchant": "Perplexity.ai",
+      "category": "AI - Research",
+      "decision": "CANCEL",
+      "amount": 78.25
+    },
+    {
+      "date": "2026-06-05",
+      "invoice": "2026-06",
+      "merchant": "Perplexity.ai",
+      "category": "AI - Research",
+      "decision": "CANCEL",
+      "amount": 78.25
+    }
+  ],
+  "nfce": {
+    "kpis": {
+      "total_all_time": 106852.21,
+      "receipt_count": 435,
+      "year_range": "2020-2026",
+      "top_category": "\ud83d\uded2 Supermercado",
+      "top_merchant": "SUPERMERCADO LITORAL LTDA.",
+      "avg_per_receipt": 245.64
+    },
+    "by_category": [
+      {
+        "category": "\ud83d\uded2 Supermercado",
+        "total": 47349.44
+      },
+      {
+        "category": "\ud83c\udfea Outros",
+        "total": 31417.07
+      },
+      {
+        "category": "\ud83c\udf7d Restaurante",
+        "total": 9681.45
+      },
+      {
+        "category": "\ud83c\udf7a Bar/Bebidas",
+        "total": 6781.51
+      },
+      {
+        "category": "\ud83d\udd27 Material/Casa",
+        "total": 4490.72
+      },
+      {
+        "category": "\ud83d\udc8a Farm\u00e1cia",
+        "total": 4409.98
+      },
+      {
+        "category": "\ud83c\udf55 Restaurante/Pizza",
+        "total": 1827.12
+      },
+      {
+        "category": "\ud83c\udf6b Padaria/Doces",
+        "total": 582.68
+      },
+      {
+        "category": "\ud83c\udfe5 Sa\u00fade",
+        "total": 312.24
+      }
+    ],
+    "by_month": [
+      {
+        "month": "2024-05",
+        "total": 770.84
+      },
+      {
+        "month": "2024-08",
+        "total": 2585.31
+      },
+      {
+        "month": "2024-09",
+        "total": 1415.49
+      },
+      {
+        "month": "2024-10",
+        "total": 3385.37
+      },
+      {
+        "month": "2024-11",
+        "total": 2753.1
+      },
+      {
+        "month": "2024-12",
+        "total": 1575.1
+      },
+      {
+        "month": "2025-01",
+        "total": 3201.06
+      },
+      {
+        "month": "2025-02",
+        "total": 2028.48
+      },
+      {
+        "month": "2025-03",
+        "total": 4133.01
+      },
+      {
+        "month": "2025-04",
+        "total": 3440.5
+      },
+      {
+        "month": "2025-05",
+        "total": 2345.77
+      },
+      {
+        "month": "2025-06",
+        "total": 1019.09
+      },
+      {
+        "month": "2025-07",
+        "total": 3138.99
+      },
+      {
+        "month": "2025-08",
+        "total": 2847.49
+      },
+      {
+        "month": "2025-09",
+        "total": 883.72
+      },
+      {
+        "month": "2025-10",
+        "total": 2647.7
+      },
+      {
+        "month": "2025-11",
+        "total": 1353.37
+      },
+      {
+        "month": "2025-12",
+        "total": 2785.27
+      },
+      {
+        "month": "2026-01",
+        "total": 2034.56
+      },
+      {
+        "month": "2026-03",
+        "total": 1243.74
+      },
+      {
+        "month": "2026-04",
+        "total": 4434.15
+      },
+      {
+        "month": "2026-05",
+        "total": 900.61
+      },
+      {
+        "month": "2026-06",
+        "total": 4044.22
+      },
+      {
+        "month": "2026-07",
+        "total": 1275.75
+      }
+    ]
+  },
+  "inflation": {
+    "personal_cpi": {
+      "2020": 100.0,
+      "2021": 105.87,
+      "2022": 131.35,
+      "2023": 182.73,
+      "2024": 172.2,
+      "2025": 204.76,
+      "2026": 142.98
+    },
+    "official_ipca": {
+      "2020": 100.0,
+      "2021": 110.06,
+      "2022": 116.43,
+      "2023": 121.81,
+      "2024": 127.7,
+      "2025": 135.14
+    },
+    "personal_accum": 43.0,
+    "official_accum": 35.1,
+    "personal_latest_year": "2026",
+    "official_latest_year": "2025",
+    "basket_count": 27
+  },
+  "mercado": {
+    "card": {
+      "total": 37245.76,
+      "count": 146,
+      "by_category": [
+        {
+          "category": "Viagem",
+          "total": 9036.83
+        },
+        {
+          "category": "Compras/ML",
+          "total": 8744.68
+        },
+        {
+          "category": "IA/Tecnologia",
+          "total": 6624.36
+        },
+        {
+          "category": "Loteria",
+          "total": 6455.1
+        },
+        {
+          "category": "Outros",
+          "total": 2235.58
+        },
+        {
+          "category": "Internet",
+          "total": 1413.12
+        },
+        {
+          "category": "Assinatura",
+          "total": 1227.5
+        },
+        {
+          "category": "Delivery/iFood",
+          "total": 1217.92
+        },
+        {
+          "category": "Transporte",
+          "total": 205.34
+        },
+        {
+          "category": "Telecomunica\u00e7\u00f5es",
+          "total": 74.43
+        }
+      ],
+      "by_month": [
+        {
+          "month": "2026-02",
+          "total": 4269.61
+        },
+        {
+          "month": "2026-03",
+          "total": 9212.69
+        },
+        {
+          "month": "2026-04",
+          "total": 15551.89
+        },
+        {
+          "month": "2026-05",
+          "total": 4439.93
+        },
+        {
+          "month": "2026-06",
+          "total": 3771.64
+        }
+      ],
+      "intl_total": 24089.75
+    },
+    "ml": {
+      "total_delivered": 25793.43,
+      "count": 54,
+      "cancelled_total": 5777.02,
+      "by_category": [
+        {
+          "category": "Eletr\u00f4nicos",
+          "total": 10864.78
+        },
+        {
+          "category": "Sa\u00fade/CPAP",
+          "total": 6545.42
+        },
+        {
+          "category": "Casa",
+          "total": 2428.74
+        },
+        {
+          "category": "Vestu\u00e1rio",
+          "total": 1609.68
+        },
+        {
+          "category": "Sa\u00fade/Higiene",
+          "total": 1248.19
+        },
+        {
+          "category": "Home Office",
+          "total": 843.27
+        },
+        {
+          "category": "Eletrodom\u00e9sticos",
+          "total": 699.9
+        },
+        {
+          "category": "Pet",
+          "total": 602.9
+        }
+      ]
+    },
+    "ifood": {
+      "total": 847.65,
+      "count": 13,
+      "orders": [
+        {
+          "date": "2026-05-30",
+          "product": "Pipa Sushi & Temakeria \u2013 1x Monte Seu Poke",
+          "amount": 90.29,
+          "category": "Delivery/Sushi",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-05-18",
+          "product": "Pipa Sushi & Temakeria \u2013 1x Monte Seu Poke",
+          "amount": 67.31,
+          "category": "Delivery/Sushi",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-05-16",
+          "product": "Maria Baunilha Confeitaria \u2013 1x Trio Maria Baunilha",
+          "amount": 73.03,
+          "category": "Delivery/Confeitaria",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-05-11",
+          "product": "iFood (taxa/pedido) \u2013 -",
+          "amount": 7.95,
+          "category": "Delivery/Taxa",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-05-02",
+          "product": "Bianca Tol\u00eado Confeitaria \u2013 1x Cake Mo\u00e7a e Morango + 1x Cake Cenoura",
+          "amount": 0.0,
+          "category": "Delivery/Confeitaria",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-04-27",
+          "product": "Bianca Tol\u00eado Confeitaria \u2013 1x Promo\u00e7\u00e3o: 2 Cake in box",
+          "amount": 0.0,
+          "category": "Delivery/Confeitaria",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-04-20",
+          "product": "Jurassic Pizza - Bessa \u2013 1x Combo 1 - Pizza G + Refri 1l",
+          "amount": 74.88,
+          "category": "Delivery/Pizza",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-04-03",
+          "product": "Matterello Pizza \u2013 2x M (8 FATIAS) 2 SABORES",
+          "amount": 0.0,
+          "category": "Delivery/Pizza",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-03-03",
+          "product": "Dona Branca \u2013 1x Pizza grande 8 fatias + Guaran\u00e1 1l",
+          "amount": 57.0,
+          "category": "Delivery/Pizza",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-01-28",
+          "product": "Maria Baunilha Confeitaria \u2013 2x Copo da Felicidade",
+          "amount": 0.0,
+          "category": "Delivery/Confeitaria",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-01-16",
+          "product": "Formaggio 43 - Forneria \u2013 2x Pizza grande - at\u00e9 02 sabores",
+          "amount": 191.8,
+          "category": "Delivery/Pizza",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-01-10",
+          "product": "Maria Baunilha Confeitaria \u2013 4x Copo da Felicidade",
+          "amount": 111.6,
+          "category": "Delivery/Confeitaria",
+          "status": "delivered"
+        },
+        {
+          "date": "2026-01-06",
+          "product": "Pizza Now Intermares \u2013 Pizza",
+          "amount": 173.79,
+          "category": "Delivery/Pizza",
+          "status": "delivered"
+        }
+      ]
+    },
+    "withdrawals": {
+      "total": 0,
+      "count": 0
+    }
+  },
+  "mercado_transactions": [
+    {
+      "date": "2026-06-05",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em WWW.PERPLEXITY.AI",
+      "amount": 78.25,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-04",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em WWW.PERPLEXITY.AI",
+      "amount": 78.25,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-04",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em WWW.PERPLEXITY.AI",
+      "amount": 78.25,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-03",
+      "invoice": "2026-06",
+      "merchant": "STARLINK INTERNET",
+      "amount": 235.52,
+      "category": "Internet",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-03",
+      "invoice": "2026-06",
+      "merchant": "DL*UberRides",
+      "amount": 11.98,
+      "category": "Transporte",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-03",
+      "invoice": "2026-06",
+      "merchant": "CONTA VIVO",
+      "amount": 74.43,
+      "category": "Telecomunica\u00e7\u00f5es",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-03",
+      "invoice": "2026-06",
+      "merchant": "UBER * PENDING",
+      "amount": 19.68,
+      "category": "Transporte",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-03",
+      "invoice": "2026-06",
+      "merchant": "MP*LOTERIASONLINESPC2",
+      "amount": 117.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-03",
+      "invoice": "2026-06",
+      "merchant": "UBER * PENDING",
+      "amount": 43.99,
+      "category": "Transporte",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-02",
+      "invoice": "2026-06",
+      "merchant": "UBER * PENDING",
+      "amount": 24.95,
+      "category": "Transporte",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-02",
+      "invoice": "2026-06",
+      "merchant": "MP*LOTERIASONLINEJEPS",
+      "amount": 161.5,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-01",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em WWW.PERPLEXITY.AI",
+      "amount": 78.56,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-06-01",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em CURSOR, AI POWERED IDE",
+      "amount": 111.81,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-30",
+      "invoice": "2026-06",
+      "merchant": "APPLE.COM/BILL",
+      "amount": 99.9,
+      "category": "Assinatura",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-30",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em CLAUDE.AI SUBSCRIPTION",
+      "amount": 113.85,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-30",
+      "invoice": "2026-06",
+      "merchant": "IFD*PIPA SUSHI E TEMAK",
+      "amount": 90.29,
+      "category": "Delivery/iFood",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-29",
+      "invoice": "2026-06",
+      "merchant": "UBER * PENDING",
+      "amount": 13.97,
+      "category": "Transporte",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-28",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em ANTHROPIC",
+      "amount": 103.5,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-24",
+      "invoice": "2026-06",
+      "merchant": "APPLE.COM/BILL",
+      "amount": 31.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-23",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em OPENAI* CHATGPT CREDIT",
+      "amount": 207.42,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-22",
+      "invoice": "2026-06",
+      "merchant": "MP*LOTERIASONLINEPXMF",
+      "amount": 210.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-20",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em OPENAI* CHATGPT CREDIT",
+      "amount": 208.66,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-19",
+      "invoice": "2026-06",
+      "merchant": "IFD*PIPA SUSHI E TEMAK",
+      "amount": 67.31,
+      "category": "Delivery/iFood",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-19",
+      "invoice": "2026-06",
+      "merchant": "DL*GOOGLE YouTub",
+      "amount": 269.0,
+      "category": "Assinatura",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-19",
+      "invoice": "2026-06",
+      "merchant": "MP*LOTERIASONLINEAPI5",
+      "amount": 120.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-18",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em CLOUDFLARE",
+      "amount": 83.44,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-18",
+      "invoice": "2026-06",
+      "merchant": "MP*LOTERIASONLINE281Q",
+      "amount": 146.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-17",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 104.95,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-16",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em WWW.PERPLEXITY.AI",
+      "amount": 78.72,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-16",
+      "invoice": "2026-06",
+      "merchant": "IFD*34.531.468 EDWIN LEIB",
+      "amount": 73.03,
+      "category": "Delivery/iFood",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-11",
+      "invoice": "2026-06",
+      "merchant": "IFD*iFood",
+      "amount": 7.95,
+      "category": "Delivery/iFood",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-10",
+      "invoice": "2026-06",
+      "merchant": "APPLE.COM/BILL",
+      "amount": 19.9,
+      "category": "Assinatura",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-09",
+      "invoice": "2026-06",
+      "merchant": "MP*LOTERIASONLINEDB7Z",
+      "amount": 151.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-08",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em GITHUB, INC.",
+      "amount": 50.93,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-06",
+      "invoice": "2026-06",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 101.85,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-05",
+      "invoice": "2026-06",
+      "merchant": "UBER * PENDING",
+      "amount": 29.97,
+      "category": "Transporte",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-05",
+      "invoice": "2026-06",
+      "merchant": "UBER * PENDING",
+      "amount": 25.93,
+      "category": "Transporte",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-05",
+      "invoice": "2026-06",
+      "merchant": "MP*LOTERIASONLINEJOSJ",
+      "amount": 248.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-03",
+      "invoice": "2026-05",
+      "merchant": "STARLINK INTERNET",
+      "amount": 235.52,
+      "category": "Internet",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-02",
+      "invoice": "2026-05",
+      "merchant": "IFD*BIANCA DOS SANTOS",
+      "amount": 96.99,
+      "category": "Delivery/iFood",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-01",
+      "invoice": "2026-05",
+      "merchant": "Compra internacional em CURSOR, AI POWERED IDE",
+      "amount": 111.81,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-05-01",
+      "invoice": "2026-05",
+      "merchant": "Compra internacional em OPENAI* CHATGPT CREDIT",
+      "amount": 206.59,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-30",
+      "invoice": "2026-05",
+      "merchant": "Compra internacional em WWW.PERPLEXITY.AI",
+      "amount": 155.25,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-30",
+      "invoice": "2026-05",
+      "merchant": "APPLE.COM/BILL.",
+      "amount": 99.9,
+      "category": "Assinatura",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-30",
+      "invoice": "2026-05",
+      "merchant": "UBER * PENDING",
+      "amount": 16.77,
+      "category": "Transporte",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-27",
+      "invoice": "2026-05",
+      "merchant": "Compra internacional em WWW.PERPLEXITY.AI",
+      "amount": 103.71,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-27",
+      "invoice": "2026-05",
+      "merchant": "MERCADOLIVRE*LINA",
+      "amount": 106.98,
+      "category": "Compras/ML",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-27",
+      "invoice": "2026-05",
+      "merchant": "MERCADOLIVRE*MERCADOLIVRE",
+      "amount": 483.98,
+      "category": "Compras/ML",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-27",
+      "invoice": "2026-05",
+      "merchant": "IFD*BIANCA DOS SANTOS",
+      "amount": 92.89,
+      "category": "Delivery/iFood",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-25",
+      "invoice": "2026-05",
+      "merchant": "MP*LOTERIASONLINEN7GJ",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-24",
+      "invoice": "2026-05",
+      "merchant": "APPLE.COM/BILL.",
+      "amount": 31.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-24",
+      "invoice": "2026-05",
+      "merchant": "UBER * PENDING",
+      "amount": 9.96,
+      "category": "Transporte",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-23",
+      "invoice": "2026-05",
+      "merchant": "Compra internacional em CLOUDFLARE",
+      "amount": 107.61,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-23",
+      "invoice": "2026-05",
+      "merchant": "UBER * PENDING",
+      "amount": 8.14,
+      "category": "Transporte",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-23",
+      "invoice": "2026-05",
+      "merchant": "MP*LOTERIASONLINE72W6",
+      "amount": 336.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-22",
+      "invoice": "2026-05",
+      "merchant": "MP*EDUARDOGIOVAN",
+      "amount": 201.72,
+      "category": "Outros",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-21",
+      "invoice": "2026-05",
+      "merchant": "MERCADOLIVRE*PKFLEXLTDA",
+      "amount": 111.83,
+      "category": "Compras/ML",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-21",
+      "invoice": "2026-05",
+      "merchant": "Compra internacional em MANUS AI",
+      "amount": 515.43,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-20",
+      "invoice": "2026-05",
+      "merchant": "IFD*JURASSIC PIZZA BES",
+      "amount": 74.88,
+      "category": "Delivery/iFood",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-20",
+      "invoice": "2026-05",
+      "merchant": "MICROSOFT*STORE",
+      "amount": 509.0,
+      "category": "Outros",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-17",
+      "invoice": "2026-05",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 103.5,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-16",
+      "invoice": "2026-05",
+      "merchant": "MP*LOTERIASONLINE2FE1",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-16",
+      "invoice": "2026-05",
+      "merchant": "MP*LOTERIASONLINE34H0",
+      "amount": 100.5,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-16",
+      "invoice": "2026-05",
+      "merchant": "MERCADOLIVRE*MERCADOLI",
+      "amount": 72.89,
+      "category": "Compras/ML",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-11",
+      "invoice": "2026-05",
+      "merchant": "IFD*iFood",
+      "amount": 7.95,
+      "category": "Delivery/iFood",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-10",
+      "invoice": "2026-05",
+      "merchant": "APPLECOMBILL",
+      "amount": 19.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-08",
+      "invoice": "2026-05",
+      "merchant": "APPLECOMBILL",
+      "amount": 21.9,
+      "category": "Assinatura",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-08",
+      "invoice": "2026-05",
+      "merchant": "Compra internacional em GITHUB, INC.",
+      "amount": 53.41,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-05",
+      "invoice": "2026-05",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 107.02,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-04",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINE9CYW",
+      "amount": 89.5,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-03",
+      "invoice": "2026-04",
+      "merchant": "STARLINK INTERNET",
+      "amount": 235.52,
+      "category": "Internet",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-03",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEDVRW",
+      "amount": 336.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-03",
+      "invoice": "2026-04",
+      "merchant": "IFD*MATTERELLO PIZZARI",
+      "amount": 165.69,
+      "category": "Delivery/iFood",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-03",
+      "invoice": "2026-04",
+      "merchant": "MERCADOLIVRE*3PRODUTOS",
+      "amount": 602.9,
+      "category": "Compras/ML",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-04-01",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em CURSOR, AI POWERED IDE",
+      "amount": 111.81,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-30",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em GROK XAI",
+      "amount": 81.36,
+      "category": "Outros",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-30",
+      "invoice": "2026-04",
+      "merchant": "APPLECOMBILL",
+      "amount": 99.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-28",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEKBE8",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-28",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEKJOW",
+      "amount": 104.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-26",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEWM4R",
+      "amount": 161.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-23",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINE12Q6",
+      "amount": 107.5,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-21",
+      "invoice": "2026-04",
+      "merchant": "MERCADOLIVRE*5PRODUTOS",
+      "amount": 119.73,
+      "category": "Compras/ML",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-21",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em MANUS AI",
+      "amount": 546.48,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-20",
+      "invoice": "2026-04",
+      "merchant": "EC*GOOGLEBRASILPAGAMEN",
+      "amount": 96.99,
+      "category": "Assinatura",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-19",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em INTERNET ARCHIVE",
+      "amount": 53.93,
+      "category": "Outros",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-19",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEU38A",
+      "amount": 119.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-18",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINENI9I",
+      "amount": 267.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-17",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 108.89,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-16",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em ALLIANZ EVENT INS",
+      "amount": 478.17,
+      "category": "Outros",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-15",
+      "invoice": "2026-04",
+      "merchant": "MERCADOLIVRE*3PRODUTOS",
+      "amount": 510.37,
+      "category": "Compras/ML",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-14",
+      "invoice": "2026-04",
+      "merchant": "STARLINK INTERNET",
+      "amount": 235.52,
+      "category": "Internet",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-13",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEJSZ1",
+      "amount": 73.5,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-13",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEJX1C",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-12",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEP6LJ",
+      "amount": 104.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-12",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEPA19",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-11",
+      "invoice": "2026-04",
+      "merchant": "IFD*iFood",
+      "amount": 7.95,
+      "category": "Delivery/iFood",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-10",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em LAN AIRLINE",
+      "amount": 9036.83,
+      "category": "Viagem",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-10",
+      "invoice": "2026-04",
+      "merchant": "APPLECOMBILL",
+      "amount": 19.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-10",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em OPENROUTER, INC",
+      "amount": 113.78,
+      "category": "Outros",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-09",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em GUMROAD* GUI RAMBO",
+      "amount": 10.9,
+      "category": "Digital",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-08",
+      "invoice": "2026-04",
+      "merchant": "APPLECOMBILL",
+      "amount": 21.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-08",
+      "invoice": "2026-04",
+      "merchant": "MERCADOLIVRE*7PRODUTOS",
+      "amount": 453.64,
+      "category": "Compras/ML",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-08",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em GITHUB, INC.",
+      "amount": 54.76,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-07",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEQPEZ",
+      "amount": 243.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-07",
+      "invoice": "2026-04",
+      "merchant": "MP*LOTERIASONLINEQTKS",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-05",
+      "invoice": "2026-04",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 108.47,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-03-04",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEFL2P",
+      "amount": 221.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-28",
+      "invoice": "2026-03",
+      "merchant": "APPLECOMBILL",
+      "amount": 99.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-27",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEYYRE",
+      "amount": 119.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-26",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEI4Q9",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-23",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEEIG7",
+      "amount": 140.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-21",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEU2WR",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-21",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEQXFX",
+      "amount": 238.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-21",
+      "invoice": "2026-03",
+      "merchant": "Compra internacional em MANUS AI",
+      "amount": 538.2,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-18",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEFEG2",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-17",
+      "invoice": "2026-03",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 108.27,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-16",
+      "invoice": "2026-03",
+      "merchant": "DL *Starlink Brazil",
+      "amount": 235.52,
+      "category": "Internet",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-14",
+      "invoice": "2026-03",
+      "merchant": "Compra internacional em ANTHROPIC",
+      "amount": 51.75,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-14",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEO4M4",
+      "amount": 206.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-14",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEOBUG",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-11",
+      "invoice": "2026-03",
+      "merchant": "MERCADOLIVRE*3PRODUTOS",
+      "amount": 6282.36,
+      "category": "Compras/ML",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-10",
+      "invoice": "2026-03",
+      "merchant": "APPLECOMBILL",
+      "amount": 19.9,
+      "category": "Assinatura",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-09",
+      "invoice": "2026-03",
+      "merchant": "MP*LOTERIASONLINEBFN5",
+      "amount": 150.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-08",
+      "invoice": "2026-03",
+      "merchant": "APPLECOMBILL",
+      "amount": 21.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-05",
+      "invoice": "2026-02",
+      "merchant": "MP*LOTERIASONLINEYY48",
+      "amount": 84.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-05",
+      "invoice": "2026-03",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 108.89,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-04",
+      "invoice": "2026-02",
+      "merchant": "MP*LOTERIASONLINEM4UQ",
+      "amount": 168.0,
+      "category": "Loteria",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-02-03",
+      "invoice": "2026-02",
+      "merchant": "Compra internacional em DESKTOP COMMANDER",
+      "amount": 272.21,
+      "category": "Outros",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-30",
+      "invoice": "2026-02",
+      "merchant": "APPLE.COM/BILL",
+      "amount": 99.9,
+      "category": "Assinatura",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-28",
+      "invoice": "2026-02",
+      "merchant": "IFD*34531468 EDWIN LEI",
+      "amount": 55.8,
+      "category": "Delivery/iFood",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-27",
+      "invoice": "2026-02",
+      "merchant": "Compra internacional em RAYCAST.COM",
+      "amount": 524.63,
+      "category": "Outros",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-21",
+      "invoice": "2026-02",
+      "merchant": "Compra internacional em CLAUDE.AI SUBSCRIPTION",
+      "amount": 1138.5,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-21",
+      "invoice": "2026-02",
+      "merchant": "Compra internacional em MANUS AI",
+      "amount": 556.83,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-19",
+      "invoice": "2026-02",
+      "merchant": "Compra internacional em LEMSQZY* PINEAPPLE-APP",
+      "amount": 111.11,
+      "category": "Assinatura",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-17",
+      "invoice": "2026-02",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 111.37,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-17",
+      "invoice": "2026-02",
+      "merchant": "MP*LOTERIASONLINE542V",
+      "amount": 111.0,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-16",
+      "invoice": "2026-02",
+      "merchant": "MP*LOTERIASONLINEU1AQ",
+      "amount": 143.6,
+      "category": "Loteria",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-16",
+      "invoice": "2026-02",
+      "merchant": "IFD*FORMAGGIO RESTAURANTE",
+      "amount": 191.8,
+      "category": "Delivery/iFood",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-15",
+      "invoice": "2026-02",
+      "merchant": "DL*Starlink Braz",
+      "amount": 235.52,
+      "category": "Internet",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-14",
+      "invoice": "2026-02",
+      "merchant": "Compra internacional em MANUS AI",
+      "amount": 25.79,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-13",
+      "invoice": "2026-02",
+      "merchant": "MP*EDUARDOGIOVAN",
+      "amount": 0.78,
+      "category": "Outros",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-10",
+      "invoice": "2026-02",
+      "merchant": "IFD*34531468 EDWIN LEI",
+      "amount": 111.6,
+      "category": "Delivery/iFood",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-10",
+      "invoice": "2026-02",
+      "merchant": "APPLE.COM/BILL",
+      "amount": 19.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-08",
+      "invoice": "2026-02",
+      "merchant": "Compra internacional em OPENAI *CHATGPT SUBSCR",
+      "amount": 111.58,
+      "category": "IA/Tecnologia",
+      "intl": true,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-08",
+      "invoice": "2026-02",
+      "merchant": "APPLE.COM/BILL",
+      "amount": 21.9,
+      "category": "Assinatura",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    },
+    {
+      "date": "2026-01-06",
+      "invoice": "2026-02",
+      "merchant": "IFD*PIZZA NOW INTERMARES",
+      "amount": 173.79,
+      "category": "Delivery/iFood",
+      "intl": false,
+      "source": "MP Cart\u00e3o"
+    }
+  ],
+  "mp_withdrawals": []
+};
+/* SYNC:END */
+
+// ── Chart defaults ──
+Chart.defaults.color = '#A0A0C0';
+Chart.defaults.borderColor = '#2A2A44';
+Chart.defaults.font.family = '-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif';
+
+const BRL = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+const pct = v => (v*100).toFixed(1)+'%';
+
+// ── Tab switching ──
+function show(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Init ──
+function init() {
+  const k = DATA.kpis;
+
+  // Header meta
+  document.getElementById('sync-meta').textContent =
+    'Last sync: ' + (k.as_of || DATA.generated?.slice(0,10) || '—');
+
+  // Sync bar
+  document.getElementById('overview-sync').innerHTML =
+    `<span>BB Brasil: <span>${BRL(k.bb_brasil_balance ?? 0)}</span></span>` +
+    `<span>6-month spend: <span>${BRL(k.total_spend_6mo)}</span></span>` +
+    `<span>Monthly avg: <span>${BRL(k.monthly_avg)}</span></span>` +
+    `<span>Subs/month: <span>${BRL(k.confirmed_monthly_sub)}</span></span>` +
+    `<span>Cancel savings: <span style="color:var(--red)">${BRL(k.cancel_savings_monthly)}</span></span>`;
+
+  renderKPIs(k);
+  renderMonthly();
+  renderCategory();
+  renderWeekly();
+  renderSubs();
+  renderCancel();
+  renderBanks();
+  renderIntl();
+  renderTx();
+  renderActions();
+  renderNfce();
+  renderIpca();
+  renderMercado();
+}
+
+function renderKPIs(k) {
+  const cards = [
+    {title:'BB Brasil Balance',value:BRL(k.bb_brasil_balance ?? 0),sub:'Checking confirmed 13/07/2026 (Rende Fácil n/a)',cls:'green'},
+    {title:'Total Liquidity',value:BRL(k.total_liquidity),sub:'BB + MP + Inter (Registrato excluded bal)',cls:'accent'},
+    {title:'6-Month Card Spend',value:BRL(k.total_spend_6mo),sub:`Monthly avg ${BRL(Math.round(k.total_spend_6mo/6*100)/100)}`,cls:'red'},
+    {title:'Sub Monthly Cost',value:BRL(k.confirmed_monthly_sub),sub:`Cancel saves ${BRL(k.cancel_savings_monthly)}/mo`,cls:'gold'},
+    {title:'Intl Outbound 2026',value:BRL(k.intl_outbound_2026||0),sub:'BCB Câmbio PDF confirmed',cls:'red'},
+    {title:'IB Deposits',value:BRL(k.ib_deposits_2026||0),sub:'Interactive Brokers 2026',cls:'accent'},
+    {title:'Fund Deposits',value:BRL(k.fund_deposits_2026||0),sub:'BRL fund capital 2026',cls:'gold'},
+    {title:'Inbound 2026',value:BRL(k.intl_inbound_2026||0),sub:'Receipts from abroad',cls:'green'},
+  ];
+  document.getElementById('kpi-cards').innerHTML = cards.map(c =>
+    `<div class="card ${c.cls}"><div class="card-title">${c.title}</div>
+     <div class="card-value num">${c.value}</div>
+     <div class="card-sub">${c.sub}</div></div>`).join('');
+}
+
+function renderMonthly() {
+  const m = DATA.monthly;
+  new Chart(document.getElementById('chart-monthly'), {
+    type:'bar',
+    data:{
+      labels: m.map(r => r.month),
+      datasets:[{
+        label:'Spend (BRL)', data: m.map(r => r.total),
+        backgroundColor:'rgba(124,106,247,.7)',borderRadius:6,borderSkipped:false
+      }]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{
+      y:{grid:{color:'#2A2A44'},ticks:{callback:v=>BRL(v)}},
+      x:{grid:{display:false}}
+    }}
+  });
+}
+
+function renderCategory() {
+  const cats = DATA.category_totals.slice(0,8);
+  new Chart(document.getElementById('chart-cat'), {
+    type:'doughnut',
+    data:{
+      labels: cats.map(c=>c.category),
+      datasets:[{data:cats.map(c=>c.total),
+        backgroundColor:['#7C6AF7','#3ECF8E','#D4A84B','#F06060','#F59E0B','#60A0F0','#A06060','#60C0A0'],
+        borderWidth:2,borderColor:'#16162A'
+      }]
+    },
+    options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:11},padding:10}}}}
+  });
+}
+
+function renderWeekly() {
+  const w = DATA.weekly;
+  new Chart(document.getElementById('chart-weekly'), {
+    type:'bar',
+    data:{
+      labels: w.map(r=>(r.period||r.start||'').slice(5)||('W'+r.week)),
+      datasets:[{
+        label:'Card Spend', data:w.map(r=>r.spend||0),
+        backgroundColor:'rgba(62,207,142,.6)',borderRadius:4,borderSkipped:false
+      }]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{
+      y:{grid:{color:'#2A2A44'},ticks:{callback:v=>BRL(v)}},
+      x:{grid:{display:false},ticks:{maxRotation:45,font:{size:10}}}
+    }}
+  });
+
+  let total = w.reduce((s,r)=>s+(r.spend||0),0);
+  document.getElementById('weekly-total').textContent = BRL(total)+' total';
+
+  document.getElementById('weekly-body').innerHTML = w.map((r,i) =>
+    `<tr><td class="text2">${i+1}</td><td>${r.start}</td>
+     <td class="right num red-t">${BRL(r.spend||0)}</td>
+     <td class="right num text2">${r.count}</td></tr>`).join('');
+}
+
+function renderSubs() {
+  const s = DATA.subscriptions;
+  const keep = s.filter(x=>x.decision==='KEEP').reduce((a,x)=>a+x.monthly_brl,0);
+  const cancel = s.filter(x=>x.decision==='CANCEL').reduce((a,x)=>a+x.monthly_brl,0);
+  document.getElementById('sub-kpis').innerHTML = [
+    {t:'KEEP Total/Month',v:BRL(keep),cls:'green'},
+    {t:'CANCEL Savings/Month',v:BRL(cancel),cls:'red'},
+    {t:'Services Tracked',v:s.length,cls:'accent'},
+  ].map(c=>`<div class="card ${c.cls}"><div class="card-title">${c.t}</div><div class="card-value num">${c.v}</div></div>`).join('');
+
+  document.getElementById('sub-meta').textContent = s.length+' services';
+  document.getElementById('sub-body').innerHTML = s.map(r =>
+    `<tr><td><strong>${r.service}</strong></td><td class="text2">${r.plan||'—'}</td>
+     <td class="text2">${r.category||'—'}</td>
+     <td class="right num ${r.decision==='CANCEL'?'red-t':r.decision==='KEEP'?'green-t':''}">${BRL(r.monthly_brl)}</td>
+     <td><span class="pill ${r.decision||''}">${r.decision||'—'}</span></td></tr>`).join('');
+}
+
+function renderCancel() {
+  const c = DATA.cancel_tracker;
+  const total = c.reduce((a,x)=>a+x.monthly_brl,0);
+  document.getElementById('cancel-kpis').innerHTML = [
+    {t:'Items Flagged',v:c.length,cls:'red'},
+    {t:'Total Monthly Cost',v:BRL(total),cls:'red'},
+    {t:'Status',v:'Pending Action',cls:'gold'},
+  ].map(x=>`<div class="card ${x.cls}"><div class="card-title">${x.t}</div><div class="card-value">${x.v}</div></div>`).join('');
+  document.getElementById('cancel-meta').textContent = 'Update status each Sunday';
+  document.getElementById('cancel-body').innerHTML = c.map(r =>
+    `<tr><td><strong>${r.service}</strong></td>
+     <td class="right num red-t">${BRL(r.monthly_brl)}</td>
+     <td><span class="pill ${r.status||'Pending'}">${r.status||'Pending'}</span></td>
+     <td><span class="pill ${(r.priority||'medium').toLowerCase()}">${r.priority||'—'}</span></td>
+     <td class="text2">${r.target||'Jul 2026'}</td></tr>`).join('');
+}
+
+function renderBanks() {
+  const b = DATA.banks;
+  const total = b.reduce((a,x)=>a+x.balance,0);
+  document.getElementById('bank-cards').innerHTML = [
+    ...b.map(x=>`<div class="card ${x.balance>0?'green':''}">
+      <div class="card-title">${x.institution}</div>
+      <div class="card-value num">${BRL(x.balance)}</div>
+      <div class="card-sub">${x.balance>0?'Confirmed':'Manual input needed'}</div></div>`),
+    `<div class="card accent"><div class="card-title">TOTAL LIQUIDITY</div>
+     <div class="card-value num">${BRL(total)}</div>
+     <div class="card-sub">Across all institutions</div></div>`
+  ].join('');
+  document.getElementById('bank-body').innerHTML = b.map(r =>
+    `<tr><td><strong>${r.institution}</strong></td>
+     <td class="right num ${r.balance>0?'green-t':'red-t'}">${BRL(r.balance)}</td>
+     <td><span class="pill ${r.balance>0?'KEEP':'REVIEW'}">${r.balance>0?'Confirmed':'Needs update'}</span></td></tr>`).join('');
+}
+
+function renderIntl() {
+  const ops = DATA.international?.ops || [];
+  const sum = DATA.international?.summary || {outbound: DATA.international?.total_brl||0, ib: DATA.kpis?.ib_deposits_2026||0, fund: DATA.kpis?.fund_deposits_2026||0, inbound: DATA.kpis?.intl_inbound_2026||0};
+  const kpis = [
+    {t:'Outbound 2026',v:BRL(sum.outbound||0),cls:'red'},
+    {t:'IB Deposits',v:BRL(sum.ib||0),cls:'accent'},
+    {t:'Fund Deposits',v:BRL(sum.fund||0),cls:'gold'},
+    {t:'Inbound 2026',v:BRL(sum.inbound||0),cls:'green'},
+  ];
+  document.getElementById('intl-kpis').innerHTML = kpis.map(c=>
+    `<div class="card ${c.cls}"><div class="card-title">${c.t}</div><div class="card-value num">${c.v}</div></div>`).join('');
+  document.getElementById('intl-meta').textContent = ops.length+' operations';
+  const dirCol = {Outbound:'red-t',Inbound:'green-t','IB Deposit':'accent-t','Fund Deposit':'gold-t'};
+  document.getElementById('intl-body').innerHTML = ops.map(r =>
+    `<tr>
+     <td class="text2">${(r.tipo||r.date||'').slice(0,10)}</td>
+     <td>${r.currency||r.institution||'—'}</td>
+     <td>${r.destino||r.dest||r.ccy||'—'}</td>
+     <td class="right num text2">${(r.amount_fx||r.fcy||0)>0?(r.amount_fx||r.fcy).toFixed(2):'—'}</td>
+     <td class="right num ${(r.amount_brl||r.brl||0)>0?'red-t':'green-t'}">${BRL(r.amount_brl||r.brl||0)}</td>
+     <td class="text2">${r.destino||r.ccy||'—'}</td>
+     <td><span class="pill KEEP">${r.tipo||'op'}</span></td>
+    </tr>`).join('');
+}
+
+function renderTx() {
+  const tx = DATA.card_transactions;
+  const months = [...new Set(tx.map(t=>t.invoice||t.date?.slice(0,7)||''))].sort();
+  let current = 'all';
+
+  const renderRows = (filter) => {
+    const rows = filter==='all'?tx:tx.filter(t=>(t.invoice||t.date?.slice(0,7))||''===filter);
+    document.getElementById('tx-meta').textContent = rows.length+' entries | '+BRL(rows.reduce((a,r)=>a+r.amount,0));
+    document.getElementById('tx-body').innerHTML = rows.map(r =>
+      `<tr><td class="text2" style="font-size:11px">${r.date||r.invoice||''}</td>
+       <td><strong>${r.merchant}</strong>${r.note?`<br><span style="font-size:11px;color:var(--text3)">${r.note}</span>`:''}</td>
+       <td class="text2">${r.category||'—'}</td>
+       <td class="right num red-t">${BRL(r.amount)}</td>
+       <td><span class="pill ${r.decision||''}">${r.decision||'—'}</span></td></tr>`).join('');
+  };
+
+  const filters = [{id:'all',label:'All'},...months.map(m=>({id:m,label:m}))];
+  document.getElementById('tx-filters').innerHTML = filters.map(f=>
+    `<button class="pill ${f.id==='all'?'KEEP':''}" onclick="filterTx('${f.id}',this)" 
+     style="cursor:pointer;border:1px solid var(--border);padding:5px 12px;font-size:12px">${f.label}</button>`).join('');
+  renderRows('all');
+  window.filterTx = (id, btn) => {
+    document.querySelectorAll('#tx-filters button').forEach(b=>b.style.opacity='0.6');
+    btn.style.opacity='1'; renderRows(id);
+  };
+}
+
+function renderActions() {
+  const cancel = DATA.cancel_tracker||[];
+  const subs = DATA.subscriptions?.filter(s=>s.decision==='CANCEL')||[];
+  const all = [...cancel,...subs].sort((a,b)=>(b.monthly_brl||0)-(a.monthly_brl||0));
+  const urgent = all.slice(0,4);
+  const high = all.slice(4,8);
+
+  const card = (item) =>
+    `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>${item.service||item.item}</strong>
+        <span class="num red-t">${BRL(item.monthly_brl||item.amount||0)}/mo</span>
+      </div>
+      <div class="card-sub">Status: ${item.status||'Pending'} · ${item.target||item.action||'Jul 2026'}</div>
+    </div>`;
+
+  document.getElementById('actions-urgent').innerHTML = urgent.map(card).join('') ||
+    '<div class="card"><div class="card-sub">No urgent items.</div></div>';
+  document.getElementById('actions-high').innerHTML = high.map(card).join('') ||
+    '<div class="card"><div class="card-sub">No high-priority items.</div></div>';
+
+  const steps = [
+    '💳 Add any new card transactions to Transactions sheet',
+    '🏦 Update Mercado Pago + Banco Inter balances (3 cells in Banks)',
+    '🔄 Review any REVIEW decisions in Subscriptions',
+    '❌ Update Cancel Tracker statuses (Pending → In Progress → Cancelled)',
+    '📋 Open SYNC sheet — verify 12 metrics auto-calculated',
+    '⚡ Run: python3 sync.py → JSON + HTML auto-updated',
+    '🌐 Open this dashboard in Safari → confirm numbers match',
+  ];
+  document.getElementById('ritual-checklist').innerHTML = steps.map((s,i) =>
+    `<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+      <span style="color:var(--text3);min-width:20px;font-weight:700">${i+1}</span>
+      <span>${s}</span></div>`).join('');
+}
+
+init();
+
+function renderMercado() {
+  const M = DATA.mercado || {};
+  const card  = M.card  || {};
+  const ml    = M.ml    || {};
+  const ifood = M.ifood || {};
+  const BRL   = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0);
+
+  // KPIs
+  document.getElementById('mp-kpis').innerHTML = [
+    {t:'💳 Total Cartão 2026', v:BRL(card.total||0),     sub:`${card.count||0} transações`,       cls:'red'},
+    {t:'🛒 ML Entregue',       v:BRL(ml.total_delivered||0), sub:`${ml.count||0} produtos`,       cls:'accent'},
+    {t:'🍕 iFood 2026',        v:BRL(ifood.total||0),    sub:`${ifood.count||0} pedidos`,          cls:'gold'},
+    {t:'🌐 Compras Intl',      v:BRL(card.intl_total||0),sub:'Cartão MP internacional',            cls:'green'},
+  ].map(c=>`<div class="card ${c.cls}">
+    <div class="card-title">${c.t}</div>
+    <div class="card-value num" style="font-size:20px">${c.v}</div>
+    <div class="card-sub">${c.sub}</div></div>`).join('');
+
+  const colors8 = ['#7C6AF7','#F06060','#3ECF8E','#D4A84B','#F59E0B','#60A5FA','#F87171','#34D399','#A78BFA','#FB923C'];
+
+  // Monthly bar chart
+  const months = (card.by_month||[]);
+  if (months.length && document.getElementById('chart-mp-monthly')) {
+    new Chart(document.getElementById('chart-mp-monthly'), {
+      type:'bar',
+      data:{
+        labels: months.map(m=>m.month),
+        datasets:[{label:'Fatura (R$)',data:months.map(m=>m.total),
+          backgroundColor:'#F06060',borderRadius:6}]
+      },
+      options:{responsive:true,plugins:{legend:{display:false}},
+        scales:{x:{grid:{color:'#1E2030'}},y:{grid:{color:'#1E2030'},ticks:{callback:v=>'R$'+v.toLocaleString('pt-BR')}}}}
+    });
+  }
+
+  // Category doughnut
+  const cats = (card.by_category||[]).slice(0,8);
+  if (cats.length && document.getElementById('chart-mp-cat')) {
+    new Chart(document.getElementById('chart-mp-cat'), {
+      type:'doughnut',
+      data:{labels:cats.map(c=>c.category),datasets:[{data:cats.map(c=>c.total),backgroundColor:colors8,borderWidth:2,borderColor:'#0D1117'}]},
+      options:{responsive:true,cutout:'60%',plugins:{legend:{position:'right',labels:{font:{size:11},color:'#A0A0C0'}}}}
+    });
+  }
+
+  // ML by category bar
+  const mlCats = (ml.by_category||[]).slice(0,7);
+  if (mlCats.length && document.getElementById('chart-ml-cat')) {
+    new Chart(document.getElementById('chart-ml-cat'), {
+      type:'bar',
+      data:{
+        labels:mlCats.map(c=>c.category),
+        datasets:[{label:'R$',data:mlCats.map(c=>c.total),backgroundColor:colors8,borderRadius:4}]
+      },
+      options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},
+        scales:{x:{grid:{color:'#1E2030'},ticks:{callback:v=>'R$'+v.toLocaleString('pt-BR')}},y:{grid:{display:false}}}}
+    });
+  }
+
+  // iFood list
+  const orders = (ifood.orders||[]).slice(0,13);
+  document.getElementById('ifood-list').innerHTML = orders.length
+    ? orders.map(o=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+        <div><span style="color:var(--text);font-size:12px;font-weight:600">${o.restaurant||o.product||'–'}</span>
+        <span style="color:var(--text3);font-size:11px;margin-left:8px">${o.date}</span></div>
+        <span class="num" style="color:var(--gold);font-size:12px">${o.amount>0?BRL(o.amount):'—'}</span></div>`).join('')
+    : '<div style="color:var(--text3);padding:12px">Sem pedidos</div>';
+
+  // Transactions table
+  const txs = (DATA.mp_card_transactions||[]).sort((a,b)=>b.date.localeCompare(a.date));
+  // fallback: use card data from mercado object
+  const allTxs = txs.length ? txs : [];
+  document.getElementById('mp-tx-meta').textContent = `${card.count||0} transações · ${BRL(card.total||0)}`;
+  // Build rows from sync data — need full tx list; use DATA if available
+  if (DATA.mercado_transactions) {
+    const rows = DATA.mercado_transactions.slice(0,100).sort((a,b)=>b.date.localeCompare(a.date));
+    document.getElementById('mp-tx-body').innerHTML = rows.map(t=>`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:7px 8px;color:var(--text3);font-size:11px">${t.date}</td>
+      <td style="padding:7px 8px;color:var(--text3);font-size:11px">${t.invoice||'—'}</td>
+      <td style="padding:7px 8px;color:var(--text);font-size:12px">${t.merchant}</td>
+      <td style="padding:7px 8px;text-align:right;color:var(--red);font-size:12px" class="num">${BRL(t.amount)}</td>
+      <td style="padding:7px 8px;font-size:11px"><span class="pill REVIEW" style="font-size:10px">${t.category||'—'}</span></td>
+      <td style="padding:7px 8px;text-align:center;font-size:11px;color:var(--text3)">${t.intl?'🌐':'—'}</td></tr>`).join('');
+  }
+}
+
+function renderNfce() {
+  const n = DATA.nfce || {};
+  const k = n.kpis || {};
+  const BRL = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+
+  document.getElementById('nfce-kpis').innerHTML = [
+    {title:'Total Gasto (2020–2026)',  value: BRL(k.total_all_time||0),   sub:k.year_range||'', cls:'red'},
+    {title:'Notas Fiscais',            value: (k.receipt_count||0).toString(), sub:'NFC-e lidas do PDF', cls:'accent'},
+    {title:'Ticket Médio',             value: BRL(k.avg_per_receipt||0),  sub:'por nota fiscal', cls:'gold'},
+    {title:'Categoria Principal',      value: (k.top_category||'–').replace(/^\S+\s/,''), sub:k.top_merchant||'', cls:'green'},
+  ].map(c =>
+    `<div class="card ${c.cls}"><div class="card-title">${c.title}</div>
+     <div class="card-value num" style="font-size:20px">${c.value}</div>
+     <div class="card-sub">${c.sub}</div></div>`
+  ).join('');
+
+  const cats = (n.by_category||[]).slice(0,8);
+  if (cats.length && document.getElementById('chart-nfce-cat')) {
+    const colors = ['#7C6AF7','#F06060','#3ECF8E','#D4A84B','#F59E0B','#60A5FA','#F87171','#34D399'];
+    new Chart(document.getElementById('chart-nfce-cat'), {
+      type:'doughnut',
+      data:{
+        labels: cats.map(c => c.category),
+        datasets:[{data: cats.map(c => c.total), backgroundColor: colors, borderWidth:0}]
+      },
+      options:{plugins:{legend:{position:'right',labels:{font:{size:11},padding:8}}},cutout:'60%'}
+    });
+  }
+
+  const mos = (n.by_month||[]);
+  if (mos.length && document.getElementById('chart-nfce-mo')) {
+    new Chart(document.getElementById('chart-nfce-mo'), {
+      type:'bar',
+      data:{
+        labels: mos.map(m => m.month),
+        datasets:[{data: mos.map(m => m.total), backgroundColor:'rgba(124,106,247,.7)', borderRadius:4}]
+      },
+      options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'R$'+v.toLocaleString('pt-BR')}}}}
+    });
+  }
+}
+
+function renderIpca() {
+  const inf = DATA.inflation || {};
+  const BRL = v => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v);
+  const personal = inf.personal_cpi || {};
+  const official = inf.official_ipca || {};
+
+  const pAcc = inf.personal_accum != null ? '+'+inf.personal_accum+'%' : '–';
+  const oAcc = inf.official_accum != null ? '+'+inf.official_accum+'%' : '–';
+  const pYr  = inf.personal_latest_year || '';
+  const gap  = (inf.personal_accum && inf.official_accum)
+    ? (inf.personal_accum - inf.official_accum).toFixed(1)+'pp acima do IBGE'
+    : '';
+
+  document.getElementById('ipca-kpis').innerHTML = [
+    {title:'IPCA Pessoal 2020–'+pYr,    value: pAcc,  sub:'Sua cesta de 27 produtos', cls:'red'},
+    {title:'IPCA Oficial IBGE',          value: oAcc,  sub:'Índice oficial acumulado', cls:'gold'},
+    {title:'Diferença',                  value: gap || '–', sub:'Custo real vs índice oficial', cls:'accent'},
+    {title:'Produtos na Cesta',          value: (inf.basket_count||27).toString(), sub:'Extraídos dos NFC-e', cls:'green'},
+  ].map(c =>
+    `<div class="card ${c.cls}"><div class="card-title">${c.title}</div>
+     <div class="card-value num" style="font-size:20px">${c.value}</div>
+     <div class="card-sub">${c.sub}</div></div>`
+  ).join('');
+
+  const yrs = ['2020','2021','2022','2023','2024','2025'];
+  const pVals = yrs.map(y => personal[y] || null);
+  const oVals = yrs.map(y => official[y] || null);
+
+  if (document.getElementById('chart-ipca')) {
+    new Chart(document.getElementById('chart-ipca'), {
+      type:'line',
+      data:{
+        labels: yrs,
+        datasets:[
+          {label:'IPCA Pessoal (sua cesta)',data:pVals,borderColor:'#F87171',backgroundColor:'rgba(248,113,113,.12)',tension:.3,pointRadius:4,fill:true},
+          {label:'IPCA Oficial IBGE',        data:oVals,borderColor:'#60A5FA',backgroundColor:'rgba(96,165,250,.08)',tension:.3,pointRadius:4,fill:true},
+        ]
+      },
+      options:{
+        plugins:{legend:{labels:{font:{size:12}}}},
+        scales:{
+          y:{beginAtZero:false,title:{display:true,text:'Índice (Base 2020 = 100)'},
+             ticks:{callback:v=>v.toFixed(0)}},
+          x:{grid:{color:'rgba(42,42,68,.6)'}}
+        }
+      }
+    });
+  }
+}
+
+</script>
+</body>
+</html>
