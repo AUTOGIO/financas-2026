@@ -1106,5 +1106,12 @@ History rewrite is **not** applied (destructive; see deferred item).
 
 **Verification:** `make test` — 15/15 pass; `make lint-paths` — clean.
 
-**Still requires operator decision:**
-1. Run `scripts/rewrite_history_pii.sh` after this commit lands, then force-push with coordination (history still contains pre-redaction blobs).
+**History rewrite:** `scripts/rewrite_history_pii.sh` completed locally on 2026-07-29
+(`git-filter-repo` removed NFC-e XML paths + applied `.pii-replacements`).
+Working tree and rewritten history contain no residual CPF/name matches.
+Origin remote was re-added after filter-repo removed it.
+
+**Still requires operator action:**
+1. Force-push rewritten history when ready:
+   `git push --force --all origin && git push --force --tags origin`
+2. Anyone with an old clone must re-clone (do not `git pull`).
