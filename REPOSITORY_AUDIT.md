@@ -1081,7 +1081,8 @@ financeai xlsx artifacts. Trimming those would leave a repository whose
 ## 30. Remediation Status (2026-07-29)
 
 Working-tree remediation executed against Stages 0–4 and Quick Wins.
-History rewrite is **not** applied (destructive; see deferred item).
+History rewrite applied locally via `scripts/rewrite_history_pii.sh` and
+force-pushed to `origin/master`.
 
 | ID | Status | Notes |
 |----|--------|-------|
@@ -1109,9 +1110,7 @@ History rewrite is **not** applied (destructive; see deferred item).
 **History rewrite:** `scripts/rewrite_history_pii.sh` completed locally on 2026-07-29
 (`git-filter-repo` removed NFC-e XML paths + applied `.pii-replacements`).
 Working tree and rewritten history contain no residual CPF/name matches.
-Origin remote was re-added after filter-repo removed it.
+Origin remote was re-added after filter-repo removed it; rewritten history
+was force-pushed to `origin`.
 
-**Still requires operator action:**
-1. Force-push rewritten history when ready:
-   `git push --force --all origin && git push --force --tags origin`
-2. Anyone with an old clone must re-clone (do not `git pull`).
+**Post-rewrite note:** Anyone with an old clone must re-clone (do not `git pull`).
