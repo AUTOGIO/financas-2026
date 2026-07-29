@@ -1028,89 +1028,75 @@ maintainable core: workbook → analytics → dashboard, plus the NFC-e pipeline
 
 ## 27. Deferred Improvements
 
-- Full `git filter-repo` rewrite to purge PII from history — coordinate with
-  any secondary clones first.
-- Externalizing `src/nfce/notas/NFCE_XML_*/` — depends on where the operator
-  wants to keep the source XMLs.
-- Consolidating dashboards (`financas2026-Dashboard.html` vs
-  `bloomberg-terminal.html`) — requires a UX decision.
-- Auto-updating `EXPECTED_METRICS` baseline (AUDIT-016).
-- Adding a lightweight CI workflow that runs `python3 -m unittest`.
+All previously deferred items from the 2026-07-29 remediation wave are closed:
+
+- History rewrite + force-push — done.
+- NFC-e XML externalization — done (`$HOME/.financas-notas/personal/`).
+- Bloomberg dashboard — archived under `archive/html/`.
+- `EXPECTED_METRICS` baseline JSON + accept/verify flags — done.
+- Lightweight CI — `.github/workflows/test.yml`.
+- Orphan workbooks — moved to `archive/data/`.
+
+See `docs/UPGRADE_REPORT_2026-07.md` for the operator-facing summary.
 
 ---
 
 ## 28. Unresolved Questions
 
-1. Is `bloomberg-terminal.html` still used, or superseded entirely by
-   `financas2026-Dashboard.html`?
-2. Is the "Fase 2" Swift/native app referenced in `docs/technical-report-2026-07.md`
-   still on the roadmap? If yes, should `FinanceVision/` be reimported?
-3. Should `src/nfce/notas/NFCE_XML_*/` continue to live inside the repo, or be
-   externalized like `notas_litoral`?
-4. What are `data/financeai-tracker.xlsx` and `data/wealthcommand.xlsx` used
-   for today? They are neither read nor written by any tracked script.
-5. Is `configure_lmstudio.sh`'s self-modification of `fv.sh` intentional, or a
-   leftover from an earlier iteration?
+| # | Question | Resolution (2026-07-29) |
+|---|----------|-------------------------|
+| 1 | Keep bloomberg-terminal? | No — archived; `financas2026-Dashboard.html` is primary. |
+| 2 | FinanceVision / Fase 2 still on roadmap? | No — remains archived (`archive/scripts/fv.sh`). |
+| 3 | Keep NFC-e XMLs in git? | No — externalized + gitignored. |
+| 4 | financeai / wealthcommand / subscription-budget xlsx? | Unused by live scripts — archived under `archive/data/`. |
+| 5 | configure_lmstudio self-editing fv.sh? | Leftover — self-edit removed; fv.sh archived. |
 
 ---
 
 ## 29. Final Recommendation
 
-The core system — an Excel workbook, a static HTML dashboard, and two
-well-tested Python pipelines — is well-designed for its single-operator scope
-and works today. The tests pass, the analytics engine's scope is honestly
-documented, and AGENTS.md keeps the top level reasonably lean.
+Remediation is complete for the single-operator local workspace. Day-to-day path:
 
-**Immediate action.** Redact PII (AUDIT-001, minimum: CPF and street addresses
-from HTML + Markdown), consolidate the duplicate root workbook (AUDIT-003),
-and archive or fix `scripts/fv.sh` (AUDIT-005) — these are the only findings
-that either expose real personal data or produce clearly wrong runtime
-behavior right now.
+1. Edit `data/financas2026-DataEntry.xlsx`
+2. `make sync` (or open/close launchers)
+3. Open `src/html/financas2026-Dashboard.html`
+4. Refresh NFC-e pipelines as needed under `src/nfce/`
 
-**Short-term.** Add a `requirements.txt`, refresh
-`docs/technical-report-2026-07.md`, replace hardcoded `/Users/eduardofgiovannini/…`
-strings, and decide whether to keep 1,367 NFC-e XMLs inside git.
-
-**Strategic.** Decide the fate of the peripheral pieces — the second
-dashboard, the missing `FinanceVision/` binary, and the wealthcommand /
-financeai xlsx artifacts. Trimming those would leave a repository whose
-"single-operator personal finance" purpose is easy to sustain.
+Keep the repo private; do not re-introduce personal XML receipts or PII into
+git. Prefer `archive/` for obsolete experiments over parallel live dashboards.
 
 ---
 
 ## 30. Remediation Status (2026-07-29)
 
-Working-tree remediation executed against Stages 0–4 and Quick Wins.
-History rewrite applied locally via `scripts/rewrite_history_pii.sh` and
-force-pushed to `origin/master`.
+Working-tree remediation, history rewrite, leftover cleanup, CI, and upgrade
+report are complete. Force-pushed to `origin/master`.
 
 | ID | Status | Notes |
 |----|--------|-------|
-| AUDIT-001 | Done | CPF/name/address/phone redacted in tree; history purged via `git-filter-repo` + force-push. Executive PDF in `archive/`. |
-| AUDIT-002 | Done (tree) | `NFCE_XML_*` removed from the index; local data lives under `$HOME/.financas-notas/personal/` and is symlinked from `src/nfce/notas/`. Paths gitignored. |
-| AUDIT-003 | Done | Root workbook removed; canonical copy is `data/financas2026-DataEntry.xlsx`. `analytics_engine.py` refuses to run if a root stray reappears. |
-| AUDIT-004 | Done | Stale report archived; fresh `docs/technical-report-2026-07.md` reflects current layout. |
-| AUDIT-005 | Done | `scripts/fv.sh` → `archive/scripts/fv.sh`; `configure_lmstudio.sh` no longer self-edits it. |
-| AUDIT-006 | Done | `requirements.txt` + README Prerequisites + `make install`. |
-| AUDIT-007 | Done | Live code/docs free of hardcoded `/Users/<name>/` (`make lint-paths` passes). Archive left alone. |
-| AUDIT-008 | Done | Bare `except:` replaced in `scripts/sysmonitor.py`. |
-| AUDIT-009 | Done | Prompt scaffold under `docs/prompts/`; OpenAI imported lazily behind `__main__`. |
+| AUDIT-001 | Done | Tree redacted; history purged via `git-filter-repo` + force-push. |
+| AUDIT-002 | Done | XMLs untracked; local under `$HOME/.financas-notas/personal/`. |
+| AUDIT-003 | Done | Canonical workbook `data/financas2026-DataEntry.xlsx` only. |
+| AUDIT-004 | Done | Fresh technical report; stale copy archived. |
+| AUDIT-005 | Done | `fv.sh` archived; configure_lmstudio no longer self-edits it. |
+| AUDIT-006 | Done | `requirements.txt` + README + `make install`. |
+| AUDIT-007 | Done | `make lint-paths` clean on live code. |
+| AUDIT-008 | Done | `sysmonitor.py` bare `except:` fixed. |
+| AUDIT-009 | Done | Prompt under `docs/prompts/` with lazy OpenAI import. |
 | AUDIT-010 | Done | Undocumented `reports/` removed. |
-| AUDIT-011 | Done | Launchers use `.venv` then `$(command -v python3)`. |
+| AUDIT-011 | Done | Launchers use `.venv` then `command -v python3`. |
 | AUDIT-012 | Done | `make clean` removes `.DS_Store` / `__pycache__`. |
-| AUDIT-013 | Done | `docs/prompts/` populated with the prompt scaffold. |
-| AUDIT-016 | Done | Baseline JSON + `--accept-new-baseline` / `--verify-ground-truth`. |
-| AUDIT-017 | Done | `archive/nfce-nested-git/` stub removed. |
-| AUDIT-019 | Done | Install hint prefers venv + `requirements.txt`. |
-| AUDIT-014/015/018 | Deferred / open | Symlink co-location OK; README now documents openpyxl; history still short. |
-| AUDIT-020 | Done | `bloomberg-terminal.html` moved to `archive/html/` (superseded by `financas2026-Dashboard.html`). |
+| AUDIT-013 | Done | `docs/prompts/` populated. |
+| AUDIT-014 | Accepted | Operator-local `notas_litoral` symlink; documented in README. |
+| AUDIT-015 | Done | README documents openpyxl / `requirements.txt`. |
+| AUDIT-016 | Done | Baseline JSON + verify/accept flags. |
+| AUDIT-017 | Done | Nested git stub removed. |
+| AUDIT-018 | N/A | Short history expected after rewrite. |
+| AUDIT-019 | Done | Install hint prefers venv. |
+| AUDIT-020 | Done | bloomberg archived. |
 
-**Verification:** `make test` — 15/15 pass; `make lint-paths` — clean.
+**Verification:** `make test` — 15/15; `make lint-paths` — clean; CI workflow added.
 
-**History rewrite:** `scripts/rewrite_history_pii.sh` completed locally on 2026-07-29
-(`git-filter-repo` removed NFC-e XML paths + applied `.pii-replacements`).
-Working tree and rewritten history contain no residual CPF/name matches.
-Origin remote was re-added after filter-repo removed it; rewritten history
-was force-pushed to `origin`.
+**Operator report:** [`docs/UPGRADE_REPORT_2026-07.md`](docs/UPGRADE_REPORT_2026-07.md)
 
 **Post-rewrite note:** Anyone with an old clone must re-clone (do not `git pull`).

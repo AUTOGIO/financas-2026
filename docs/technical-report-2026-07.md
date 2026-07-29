@@ -167,9 +167,9 @@ bash scripts/financas-close.sh  # sync + save Excel + close relevant Atlas windo
   month × category matrix.
 - **Native app.** A previously planned Swift/FinanceVision app is
   archived (see `archive/scripts/fv.sh` and `archive/FINANCEVISION_CLOSE_REPORT.md`).
-- **History rewrite.** Older commits may still contain PII in tracked
-  files that were redacted in the working tree. See
-  `scripts/rewrite_history_pii.sh` for the pre-flighted rewrite plan.
+- **Orphan workbooks.** Earlier `financeai-tracker`, `wealthcommand`, and
+  `subscription-budget-2026` spreadsheets are under `archive/data/` — none are
+  consumed by the live analytics path.
 
 ## 8. Governance
 

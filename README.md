@@ -67,6 +67,8 @@ locally:
 - Root: only `README.md`, `AGENTS.md`, `Makefile`, `requirements.txt`,
   `.gitignore`, and toolchain files
 
+Latest upgrade summary: [`docs/UPGRADE_REPORT_2026-07.md`](docs/UPGRADE_REPORT_2026-07.md).
+
 ## Developer tasks
 
 Common Make targets:

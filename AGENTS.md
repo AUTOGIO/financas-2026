@@ -9,7 +9,7 @@ Personal finance / analytics workspace (local-first). Prefer moves over rewrites
 | `src/` | Application code (HTML dashboards, NFC-e inflation pipeline) |
 | `scripts/` | Runnable helpers (`.sh`, `.py` launchers/tools) |
 | `config/` | Non-secret settings / metadata |
-| `data/` | CSV, Excel, exports, raw inputs (`data/raw`, `data/planilhas`) |
+| `data/` | CSV, Excel, exports, raw inputs (`data/raw`) |
 | `assets/` | Images, icons, logos (create only when needed) |
 | `docs/` | Guides, reports, design notes |
 | `docs/prompts/` | AI prompt files |

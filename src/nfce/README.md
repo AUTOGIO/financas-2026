@@ -41,7 +41,10 @@ Optional flags: `--skip-html`, `--output-json`, `--validation-json`, `--notes-di
 
 ### Expected metrics
 
-See `EXPECTED_METRICS` in `personal_inflation.py` (update only after intentional personal data additions).
+Ground-truth baseline lives in [`personal_inflation_baseline.json`](personal_inflation_baseline.json).
+Verify with `--verify-ground-truth`; refresh after intentional data additions with
+`--accept-new-baseline`. `EXPECTED_METRICS` in `personal_inflation.py` is only a
+fallback if the JSON file is missing.
 
 ### Incremental refresh (personal)
 
