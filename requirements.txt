@@ -1,0 +1,9 @@
+# financas-2026 runtime dependencies
+# Install: python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt
+
+# Read the master data-entry workbook (scripts/analytics_engine.py)
+openpyxl>=3.1,<4
+
+# Optional: only needed if you regenerate docs/prompts/personal_inflation_prompt.py
+# Uncomment before running that prompt scaffold.
+# openai>=1.40,<2

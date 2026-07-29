@@ -2,8 +2,16 @@
 # financas-2026 · safe close
 # Saves Excel, closes all Atlas windows for this project, sends notification
 
-BASE="$HOME/Documents/financas-2026"
-PYTHON="/opt/homebrew/bin/python3"
+BASE="$HOME/Documents/GitHub/financas-2026"
+if [ -x "$BASE/.venv/bin/python3" ]; then
+  PYTHON="$BASE/.venv/bin/python3"
+else
+  PYTHON="${PYTHON:-$(command -v python3)}"
+fi
+if [ -z "$PYTHON" ] || [ ! -x "$PYTHON" ]; then
+  echo "❌ python3 not found on PATH. Install Python 3.10+ or set PYTHON=/path/to/python3" >&2
+  exit 1
+fi
 
 echo "📥 Final sync before close..."
 cd "$BASE" && "$PYTHON" sync.py --quiet 2>/dev/null || "$PYTHON" sync.py

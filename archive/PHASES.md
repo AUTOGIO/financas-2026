@@ -19,14 +19,14 @@ The app target is `FinanceVision`.
 
 These assets are the reference system and must stay reproducible during migration:
 
-- `/Users/eduardofgiovannini/Documents/financas-2026/financas2026-DataEntry.xlsx`
-- `/Users/eduardofgiovannini/Documents/financas-2026/dashboard_data.json`
-- `/Users/eduardofgiovannini/Documents/financas-2026/html/financas2026-Dashboard.html`
-- `/Users/eduardofgiovannini/Documents/financas-2026/nfce`
-- `/Users/eduardofgiovannini/Documents/financas-2026/mercado_pago`
-- `/Users/eduardofgiovannini/Documents/financas-2026/mercado_livre_ifood`
-- `/Users/eduardofgiovannini/Documents/financas-2026/banco_inter`
-- `/Users/eduardofgiovannini/Documents/financas-2026/bcb_registrato`
+- `/Users/eduardofgiovannini/Documents/GitHub/financas-2026/financas2026-DataEntry.xlsx`
+- `/Users/eduardofgiovannini/Documents/GitHub/financas-2026/dashboard_data.json`
+- `/Users/eduardofgiovannini/Documents/GitHub/financas-2026/html/financas2026-Dashboard.html`
+- `/Users/eduardofgiovannini/Documents/GitHub/financas-2026/nfce`
+- `/Users/eduardofgiovannini/Documents/GitHub/financas-2026/mercado_pago`
+- `/Users/eduardofgiovannini/Documents/GitHub/financas-2026/mercado_livre_ifood`
+- `/Users/eduardofgiovannini/Documents/GitHub/financas-2026/banco_inter`
+- `/Users/eduardofgiovannini/Documents/GitHub/financas-2026/bcb_registrato`
 
 ## Product Boundary
 

@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 # financas-2026 · login / manual launcher
-# /Users/eduardofgiovannini/Documents/financas-2026/scripts/financas-login.sh
+# Runs via a macOS Login Item; assumes the repo lives under $HOME/Documents/GitHub/.
 
-BASE="$HOME/Documents/financas-2026"
-PYTHON="/opt/homebrew/bin/python3"
+BASE="$HOME/Documents/GitHub/financas-2026"
+if [ -x "$BASE/.venv/bin/python3" ]; then
+  PYTHON="$BASE/.venv/bin/python3"
+else
+  PYTHON="${PYTHON:-$(command -v python3)}"
+fi
+if [ -z "$PYTHON" ] || [ ! -x "$PYTHON" ]; then
+  echo "❌ python3 not found on PATH. Install Python 3.10+ or set PYTHON=/path/to/python3" >&2
+  exit 1
+fi
 LOG="$BASE/logs/login-launch.log"
 mkdir -p "$BASE/logs"
 exec >> "$LOG" 2>&1

@@ -3,7 +3,7 @@
 ## Metadata
 
 - Nome do projeto: `financas-2026`
-- Caminho do repositório: `/Users/eduardofgiovannini/Documents/financas-2026`
+- Caminho do repositório: `/Users/eduardofgiovannini/Documents/GitHub/financas-2026`
 - Data de criação do relatório: `2026-07-07 14:36:43 -0300`
 - Fase do projeto: `Fase 1`
 - Status: `Operacional, encerrado para manutenção semanal`
@@ -220,7 +220,7 @@ Ritual operacional semanal documentado e consistente com a estrutura do projeto:
    - especialmente Banco Inter e outras fontes manuais
 
 3. Abrir Claude Code ou Claude Cowork no repositório
-   - repositório raiz: `/Users/eduardofgiovannini/Documents/financas-2026`
+   - repositório raiz: `/Users/eduardofgiovannini/Documents/GitHub/financas-2026`
 
 4. Fazer upload ou posicionar os novos arquivos
    - nas pastas de evidência adequadas

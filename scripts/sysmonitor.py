@@ -6,8 +6,18 @@ Writes ~/.financas-system-status.json for the dashboard to read.
 No sudo needed.
 """
 
-import subprocess, time, json, os, sys
+import json
+import logging
+import os
+import subprocess
+import time
 from datetime import datetime
+
+logging.basicConfig(
+    level=os.environ.get("SYSMONITOR_LOG", "INFO"),
+    format="%(asctime)s %(levelname)s sysmonitor: %(message)s",
+)
+log = logging.getLogger("sysmonitor")
 
 # ── Thresholds ───────────────────────────────
 CPU_WARN    = 80   # %
@@ -21,7 +31,16 @@ STATUS_FILE = os.path.expanduser("~/.financas-system-status.json")
 _last_alert = {}
 
 def notify(title: str, body: str, sound: str = "Basso"):
-    script = f'display notification "{body}" with title "{title}" sound name "{sound}"'
+    # Escape backslashes and double quotes so untrusted title/body strings
+    # cannot break out of the AppleScript literal.
+    def esc(text: str) -> str:
+        return text.replace("\\", "\\\\").replace('"', '\\"')
+
+    script = (
+        f'display notification "{esc(body)}" '
+        f'with title "{esc(title)}" '
+        f'sound name "{esc(sound)}"'
+    )
     subprocess.run(["osascript", "-e", script], capture_output=True)
 
 def alert(key: str, title: str, body: str, cooldown: int = 120):
@@ -42,7 +61,7 @@ def get_cpu() -> float:
                 idle = float(line.split("idle")[0].split(",")[-1].strip().replace("%", ""))
                 return round(100.0 - idle, 1)
     except Exception as e:
-        print(f"[cpu] {e}")
+        log.warning("cpu read failed: %s", e)
     return 0.0
 
 def get_memory() -> float:
@@ -53,7 +72,7 @@ def get_memory() -> float:
                 free = float(line.split(":")[1].strip().replace("%", ""))
                 return round(100.0 - free, 1)
     except Exception as e:
-        print(f"[mem] {e}")
+        log.warning("memory read failed: %s", e)
     return 0.0
 
 def get_thermal_level() -> int:
@@ -64,7 +83,8 @@ def get_thermal_level() -> int:
             capture_output=True, text=True, timeout=2
         )
         return int(r.stdout.split(":")[1].strip())
-    except:
+    except Exception as exc:
+        log.debug("thermal read failed: %s", exc)
         return 0
 
 THERMAL_LABELS = {0: "Normal", 1: "Elevada", 2: "Séria", 3: "Crítica ⚠"}
@@ -82,15 +102,15 @@ def write_status(cpu: float, mem: float, thermal: int):
     try:
         with open(STATUS_FILE, "w") as f:
             json.dump(status, f)
-    except:
-        pass
+    except OSError as exc:
+        log.warning("could not write status file %s: %s", STATUS_FILE, exc)
 
 def is_port_open(port: int) -> bool:
     import socket
     try:
         with socket.create_connection(("localhost", port), timeout=0.5):
             return True
-    except:
+    except OSError:
         return False
 
 # ── Main loop ────────────────────────────────
@@ -123,7 +143,10 @@ while True:
         elif thermal >= 2:
             alert("thermal_warn", "🌡 Temperatura Elevada", "Thermal throttling ativo — pode ficar lento", cooldown=180)
 
+    except KeyboardInterrupt:
+        log.info("interrupted; exiting")
+        break
     except Exception as e:
-        print(f"[loop error] {e}")
+        log.error("loop error: %s", e)
 
     time.sleep(INTERVAL)

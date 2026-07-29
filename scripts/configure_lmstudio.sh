@@ -120,39 +120,14 @@ fi
   -y && green "Gemma 4 E4B loaded (ctx=$CTX, no speculative)" \
   || yellow "Load failed — do it manually in LM Studio UI with context=$CTX"
 
-# ── 5. Update fv.sh to always pass correct load params ────────
-step "Updating fv.sh to enforce load params"
-FV="$TOOLS_DIR/fv.sh"
-if grep -q "lms load" "$FV" 2>/dev/null; then
-  green "fv.sh already has lms load call"
-else
-  # Insert lms ensure-loaded block after the Ollama check section
-  python3 - << PYEOF2
-from pathlib import Path
-fv = Path("$FV")
-src = fv.read_text()
-
-# Insert after the shebang + first comment block, before OLLAMA check
-insert_after = "# ── 1. Ensure"
-insert_block = '''# ── 0. Ensure Gemma 4 E4B is loaded with correct params ────
-LMS_BIN="$HOME/.lmstudio/bin/lms"
-if [ -x "\$LMS_BIN" ]; then
-  GEMMA_LOADED=\$("\$LMS_BIN" model list 2>/dev/null | grep -c "google/gemma-4-e4b" || echo 0)
-  if [ "\$GEMMA_LOADED" -eq 0 ]; then
-    echo "  Loading Gemma 4 E4B (ctx=2048)..."
-    "\$LMS_BIN" load google/gemma-4-e4b --context-length 2048 --no-speculative-draft-mtp -y 2>/dev/null || true
-  fi
-fi
-
-'''
-if insert_after in src:
-    src = src.replace(insert_after, insert_block + insert_after, 1)
-    fv.write_text(src)
-    print("  fv.sh updated")
-else:
-    print("  Could not find insert point in fv.sh — skipping")
-PYEOF2
-fi
+# ── 5. Note about fv.sh (formerly auto-edited here) ───────────
+# The previous version of this script rewrote scripts/fv.sh at runtime to
+# insert an `lms load` block. That was surprising behaviour (AUDIT-005) and
+# fv.sh itself has since been archived because the FinanceVision Swift
+# project is not in this repo. If you restore FinanceVision, add the
+# `lms load` invocation directly into the new fv.sh instead of self-editing.
+step "Skipping fv.sh self-edit (script archived — see AUDIT-005)"
+green "no-op — fv.sh moved to archive/scripts/fv.sh"
 
 # ── 6. Summary ────────────────────────────────────────────────
 echo ""

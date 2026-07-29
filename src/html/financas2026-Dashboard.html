@@ -109,6 +109,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Ne
   <button class="tab-btn" onclick="show('nfce',this)">🧾 NFC-e</button>
   <button class="tab-btn" onclick="show('ipca',this)">📈 IPCA</button>
   <button class="tab-btn" onclick="show('mercado',this)">💳 Mercado Pago</button>
+  <button class="tab-btn" onclick="show('insights',this)">🤖 AI Insights</button>
 </div>
 
 <div class="content">
@@ -240,6 +241,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Ne
               color:var(--gold);text-decoration:none;font-size:13px;font-weight:600">
       📈 Abrir IPCA Tracker →
     </a>
+    <a href="../nfce/personal_inflation_index.html" target="_blank"
+       style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;
+              background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+              color:var(--accent2);text-decoration:none;font-size:13px;font-weight:600">
+      📉 Inflação pessoal (NFC-e) →
+    </a>
+    <a href="../nfce/litoral_store_prices.html" target="_blank"
+       style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;
+              background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+              color:var(--accent2);text-decoration:none;font-size:13px;font-weight:600">
+      🛒 Preços Litoral (loja) →
+    </a>
   </div>
 </div>
 
@@ -301,6 +314,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Ne
       </table>
     </div>
   </div>
+</div>
+
+<!-- ══ AI INSIGHTS ══ -->
+<div class="panel" id="panel-insights">
+  <div class="meta" style="margin-bottom:16px;font-size:12px;color:var(--text3)" id="insights-scope-note"></div>
+  <div class="grid g3" style="margin-bottom:20px" id="insights-kpis"></div>
+  <p class="section-title">🔍 Anomalias Detectadas (categoria AI/assinatura)</p>
+  <div class="tbl-wrap" style="margin-bottom:20px">
+    <table class="tbl"><thead><tr>
+      <th>Categoria</th><th>Mês</th><th class="right">Atual (BRL)</th><th class="right">Baseline (BRL)</th><th class="right">Z-score</th><th>Severidade</th>
+    </tr></thead><tbody id="insights-anomalies-body"></tbody></table>
+  </div>
+  <p class="section-title">📝 Narrativa</p>
+  <div id="insights-narrative"></div>
 </div>
 
 </div><!-- /content -->
@@ -3417,7 +3444,32 @@ const DATA = {
       "source": "MP Cart\u00e3o"
     }
   ],
-  "mp_withdrawals": []
+  "mp_withdrawals": [],
+  "insights": {
+    "generated": "2026-07-18T15:12:14",
+    "scope_note": "Ported from giovannini-finance/scripts/compute_insights.py. Anomaly detection covers ONLY the AI/subscription Transactions subset (not full ledger). Projection is expense-only (no income data exists in this repo, so no cash-flow/balance figure).",
+    "anomalies": [
+      {
+        "category": "AI - Research",
+        "month": "2026-06",
+        "current": 313.31,
+        "baseline_mean": 112.56,
+        "z_score": 1.51,
+        "direction": "acima",
+        "severity": "low"
+      }
+    ],
+    "expense_projection": {
+      "rolling_avg_weekly": 431.62,
+      "trend_slope_weekly": -19.07,
+      "trend_direction": "caindo",
+      "projected_spend": { "30d": 1674.67, "60d": 2999.13, "90d": 3973.38 }
+    },
+    "narrative": [
+      "Gasto em 'AI - Research' está acima do padrão em 2026-06 (R$ 313.31 vs média de R$ 112.56, z=1.51).",
+      "Tendência de gasto semanal (cartão, todas categorias): caindo. Projeção 30d: R$ 1674.67."
+    ]
+  }
 };
 /* SYNC:END */
 
@@ -3466,6 +3518,7 @@ function init() {
   renderNfce();
   renderIpca();
   renderMercado();
+  renderInsights();
 }
 
 function renderKPIs(k) {
@@ -3863,6 +3916,47 @@ function renderIpca() {
       }
     });
   }
+}
+
+function renderInsights() {
+  const ins = DATA.insights || {};
+  const anomalies = ins.anomalies || [];
+  const proj = ins.expense_projection || {};
+  const narrative = ins.narrative || [];
+
+  const noteEl = document.getElementById('insights-scope-note');
+  if (noteEl) noteEl.textContent = ins.scope_note || '';
+
+  const top = anomalies[0];
+  document.getElementById('insights-kpis').innerHTML = [
+    {title:'Anomalias (mês atual)', value: anomalies.length.toString(),
+     sub: top ? `Top: ${top.category} (z=${top.z_score})` : 'Nenhuma detectada',
+     cls: anomalies.length ? 'red' : 'green'},
+    {title:'Projeção 30d (gasto cartão)', value: BRL(proj.projected_spend?.['30d'] || 0),
+     sub: `Tendência: ${proj.trend_direction || '—'}`, cls:'gold'},
+    {title:'Média Semanal (rolling)', value: BRL(proj.rolling_avg_weekly || 0),
+     sub:'Últimas semanas, todas categorias', cls:'accent'},
+  ].map(c =>
+    `<div class="card ${c.cls}"><div class="card-title">${c.title}</div>
+     <div class="card-value num">${c.value}</div>
+     <div class="card-sub">${c.sub}</div></div>`
+  ).join('');
+
+  document.getElementById('insights-anomalies-body').innerHTML = anomalies.length
+    ? anomalies.map(a => `<tr>
+        <td>${a.category}</td><td>${a.month}</td>
+        <td class="right num">${BRL(a.current)}</td>
+        <td class="right num text2">${BRL(a.baseline_mean)}</td>
+        <td class="right num">${a.z_score}</td>
+        <td><span class="pill ${a.severity==='high'?'CANCEL':a.severity==='medium'?'REVIEW':'KEEP'}">${a.severity}</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="text2">Nenhuma anomalia detectada.</td></tr>';
+
+  document.getElementById('insights-narrative').innerHTML = narrative.length
+    ? narrative.map((n,i) => `<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--text3);min-width:20px;font-weight:700">${i+1}</span>
+        <span>${n}</span></div>`).join('')
+    : '<div class="card"><div class="card-sub">Sem narrativa disponível.</div></div>';
 }
 
 </script>

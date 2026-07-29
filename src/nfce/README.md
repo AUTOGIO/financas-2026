@@ -1,25 +1,21 @@
-# NFC-e Personal Inflation
+# NFC-e Personal Inflation + Litoral Store Track
 
-Local, deterministic analysis of one household's personal inflation from Brazilian NFC-e XMLs.
+Two parallel analyses from Brazilian NFC-e XMLs. **Do not mix their inputs.**
 
-## Source Of Truth
+| Track | Input | Script | Meaning |
+|-------|--------|--------|---------|
+| **Personal** | [`notas/`](notas/) | [`personal_inflation.py`](personal_inflation.py) | Household inflation from *your* receipts |
+| **Litoral store** | [`notas_litoral/`](notas_litoral/) → `LitoralPriceTracker/data/raw/NOTAS_LITORAL` | [`litoral_store_prices.py`](litoral_store_prices.py) | One-day-per-year store price snapshots (Supermercado Litoral) |
 
-- Primary input: XML files under [notas](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/notas)
-- Current XML inventory:
-  - 2 export folders: `NFCE_XML_*`
-  - 918 XML note files
-  - 496 unique valid receipt keys after deduplication
-  - 4 unique cancelled keys excluded
-- Supporting artifacts only:
-  - [nfce_transactions.csv](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/nfce_transactions.csv)
-  - [nfce_items.csv](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/nfce_items.csv)
-  - existing JSON/HTML outputs
+## Personal track — source of truth
 
-The CSVs are not complete enough to reproduce the final index by themselves. The XMLs are the only reliable baseline for reruns.
+- Primary input: XML files under [`notas/`](notas/)
+- Current XML inventory: `NFCE_XML_*` export folders, unique keys after dedup, cancelled keys excluded
+- Supporting artifacts only: CSVs / derived JSON (not sufficient to reproduce the index alone)
 
-## Current Pipeline
+## Personal pipeline
 
-- Entry point: [personal_inflation.py](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/personal_inflation.py)
+- Entry point: [`personal_inflation.py`](personal_inflation.py)
 - Method:
   - product identity = valid EAN, else `CNPJ-root + normalized description`
   - commercial unit stays in the grouping key
@@ -29,100 +25,103 @@ The CSVs are not complete enough to reproduce the final index by themselves. The
   - monthly inflation = spend-weighted mean of active log returns
   - chained base = `100` at the first active month
 
-## Run
-
-From this repo root:
+### Run (personal)
 
 ```bash
-cd /Users/eduardofgiovannini/Documents/financas-2026/src/nfce
+cd "$(git rev-parse --show-toplevel)/src/nfce"
 python3 personal_inflation.py --verify-ground-truth
 ```
 
-Optional flags:
+Optional flags: `--skip-html`, `--output-json`, `--validation-json`, `--notes-dir`.
+
+### Outputs (personal)
+
+- `personal_inflation_data.json` / `personal_inflation_validation.json`
+- [`personal_inflation_index.html`](personal_inflation_index.html) (+ `.js` / `.css`)
+
+### Expected metrics
+
+See `EXPECTED_METRICS` in `personal_inflation.py` (update only after intentional personal data additions).
+
+### Incremental refresh (personal)
+
+Drop another `NFCE_XML_*` folder into `notas/` and rerun. Dedup is by 44-digit access key. Never drop Litoral store dumps here.
+
+---
+
+## Litoral store track
+
+Store-wide NFC-e dumps for **Supermercado Litoral** (CNPJ `08189400000107`, Cabedelo/PB). Each export folder is typically **one calendar day** (26/Dec for 2020–2025; 2026-07-01 naming differs and is excluded from YoY joins).
+
+This is a **local price benchmark**, not household inflation. The macOS app under `Downloads/NOTAS_LITORAL/LitoralPriceTracker` explores the same XMLs interactively.
+
+### Setup notes dir
+
+XMLs stay out of git (~330MB+). Symlink your local checkout of the sibling
+`LitoralPriceTracker` repository:
 
 ```bash
-python3 personal_inflation.py --skip-html
-python3 personal_inflation.py --output-json /tmp/personal_inflation_data.json --validation-json /tmp/personal_inflation_validation.json
+cd "$(git rev-parse --show-toplevel)/src/nfce"
+ln -sfn "$HOME/Documents/GitHub/LitoralPriceTracker/data/raw/NOTAS_LITORAL" notas_litoral
 ```
 
-## Outputs
+Expected layout under that root: year folders `2020/`…`2026/` with `NFCE_*.xml` (legacy `NFCE_XML_*` still works), plus optional `NFCE_*.txt` SEFAZ dumps. Refresh = add new XMLs/TXTs there and rerun.
 
-- [personal_inflation_data.json](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/personal_inflation_data.json)
-  - main reproducible analysis payload
-- [personal_inflation_validation.json](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/personal_inflation_validation.json)
-  - inventory checks, duplicate/cancelled checks, numeric-field issues, invalid EAN handling, >4x jump filtering, ground-truth verification
-- [personal_inflation_index.html](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/personal_inflation_index.html)
-  - app shell with overview, product exploration, and validation views
-- [personal_inflation_index.js](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/personal_inflation_index.js)
-  - local UI state, charts, filters, and validation rendering
-- [personal_inflation_index.css](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/personal_inflation_index.css)
-  - dashboard styles
-
-## Expected Reproduced Metrics
-
-Successful execution should reproduce:
-
-- valid receipts: `496`
-- cancelled unique keys excluded: `4`
-- total spend: `R$ 148,431.10`
-- tracked products: `606`
-- coverage: `40.1%`
-- final index: `155.17` in `2026-06`
-- trailing 12 months: `3.59%`
-
-## Incremental Refresh
-
-To add newly downloaded receipts, drop another export folder into `notas/` named
-`NFCE_XML_<something>` and rerun:
+### Run (Litoral)
 
 ```bash
-python3 personal_inflation.py
+cd "$(git rev-parse --show-toplevel)/src/nfce"
+python3 litoral_store_prices.py
 ```
 
-Receipts are deduplicated by their 44-digit access key across all folders, so
-re-downloading notes you already have never double-counts. Cancelled keys
-(`CANC_*.xml`) are excluded and the validation report records the collapsed
-duplicates.
+Optional: `--notes-dir`, `--personal-json` (for the compare panel), `--skip-html`.
 
-If you intentionally add new receipts, `--verify-ground-truth` will fail until
-you update `EXPECTED_METRICS` in [personal_inflation.py](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/personal_inflation.py).
-That guard is meant to catch accidental drift between refreshes.
+### Method (Litoral)
+
+1. Reuse `parse_receipts` for year folders `20XX/` (or legacy `NFCE_XML_*`); also ingest SEFAZ `NFCE_*.txt` pipe exports (no EAN; grouped by emission timestamp)
+2. Keep CNPJ `08189400000107` only (TXT assumed Litoral)
+3. Snapshot price = median unit price within each calendar year, keyed by normalized description + UOM (merges XML+TXT)
+4. Staples matched by product label; equal-weight geometric basket on Dec-eligible years (2026 = naming drift)
+5. Optional compare panel vs `personal_inflation_data.json` by keyword family
+
+Refresh TXT: drop new `NFCE_YYYYMMDDhhmmss.txt` files into `notas_litoral/` (same folder as the XMLs) and rerun.
+
+### Outputs (Litoral)
+
+- `litoral_price_data.json` / `litoral_price_validation.json` (gitignored; rebuild locally)
+- [`litoral_store_prices.html`](litoral_store_prices.html) — overview, vs personal, product table
+
+---
 
 ## Tests
 
-Run the lightweight methodology tests:
+From repo root:
 
 ```bash
-cd /Users/eduardofgiovannini/Documents/financas-2026/src/nfce
-python3 -m unittest discover -s tests -p 'test_*.py'
+python3 -m unittest tests.test_personal_inflation tests.test_litoral_store_prices
 ```
 
-Coverage is intentionally narrow and focused on the core calculation rules:
+Personal coverage: product identity, units, medians, log returns, chained weights, dedup.  
+Litoral coverage: CNPJ filter, YoY eligibility / naming drift, staple match, basket rebase.
 
-- product identity
-- unit separation
-- monthly median pricing
-- gap-spread log returns
-- chained weighted aggregation
-- incremental-refresh dedup by access key + cancelled-note exclusion
+## Dashboard use
 
-## Dashboard Use
-
-You can open [personal_inflation_index.html](/Users/eduardofgiovannini/Documents/financas-2026/src/nfce/personal_inflation_index.html)
-directly and it will use the embedded fallback payload written by the pipeline.
-
-If you want the app to fetch the current JSON files live instead of relying on
-the embedded fallback, serve the folder locally:
+Serve the folder and open either app:
 
 ```bash
-cd /Users/eduardofgiovannini/Documents/financas-2026/src/nfce
+cd "$(git rev-parse --show-toplevel)/src/nfce"
 python3 -m http.server 8000
 ```
 
-Then open [http://127.0.0.1:8000/personal_inflation_index.html](http://127.0.0.1:8000/personal_inflation_index.html).
+- Personal: [http://127.0.0.1:8000/personal_inflation_index.html](http://127.0.0.1:8000/personal_inflation_index.html)
+- Litoral: [http://127.0.0.1:8000/litoral_store_prices.html](http://127.0.0.1:8000/litoral_store_prices.html)
 
-## Known Gaps / Limits
+Opening the HTML files directly also works via the embedded fallback payload written by each pipeline. The main financas dashboard links both under the NFC-e panel.
 
-- IPCA is still a rough embedded reference line, not a live external fetch.
-- The dashboard is still a static local app, not a compiled frontend project.
-- CSV artifacts remain useful for inspection, but they are partial historical extracts and should not be promoted to source-of-truth status.
+## Known gaps / limits
+
+- IPCA is a rough embedded reference line, not a live fetch.
+- Litoral sampling is directional (≈1 day/year), not continuous monthly inflation.
+- 2026-07 product naming breaks many YoY joins — excluded from staple YoY by design.
+- Dashboards are static local apps, not a compiled frontend.
+- CSV artifacts remain inspection-only and are not source of truth.

@@ -11,10 +11,16 @@ tmp/
 *.log
 *.tmp
 
+# Generated analytics output (rebuild: python3 sync.py / make sync)
+data/insights.json
+
 # Secrets / env
 .env
 .env.*
 !.env.example
+
+# Local-only PII rewrite patterns (used by scripts/rewrite_history_pii.sh)
+.pii-replacements
 
 # Python
 __pycache__/
@@ -38,8 +44,9 @@ build/
 *.swp
 *~
 
-# Workbook session backups
+# Workbook and file session backups
 *.backup-*.xlsx
+*.backup-*
 
 # NFC-e regenerated pipeline outputs (rebuild: python3 src/nfce/personal_inflation.py)
 src/nfce/personal_inflation_data.json
@@ -50,8 +57,18 @@ src/nfce/inflation_data.json
 src/nfce/nfce_items.csv
 src/nfce/nfce_transactions.csv
 
+# Litoral store track (rebuild: python3 src/nfce/litoral_store_prices.py)
+src/nfce/litoral_price_data.json
+src/nfce/litoral_price_validation.json
+# Local symlink/copy of Downloads/NOTAS_LITORAL (~330MB) — do not commit XMLs
+src/nfce/notas_litoral
+
 # Too large for GitHub (>100MB); keep local only
 src/nfce/notas/nfce.pdf
 
-# Nested git objects archived during cleanup (local reference only)
-archive/nfce-nested-git/
+# NFC-e receipt XMLs are personal purchase history — keep out of git.
+# The paths under src/nfce/notas/ are usually symlinks to $HOME/.financas-notas/
+# (see AUDIT-002 in REPOSITORY_AUDIT.md). Match both plain dirs and symlinks
+# by omitting the trailing slash.
+src/nfce/notas/NFCE_XML_*
+src/nfce/notas/NFCE_*.txt

@@ -1,6 +1,17 @@
-from openai import OpenAI
+"""
+Prompt scaffold used to ask an LLM to reproduce the personal inflation index
+methodology from raw NFC-e data. NOT part of the runtime pipeline.
 
-client = OpenAI()
+Run manually:
+    OPENAI_API_KEY=... python3 docs/prompts/personal_inflation_prompt.py
+
+The OpenAI SDK is imported lazily inside main() so that just importing this
+file (e.g. during test discovery) does not require network access or an API
+key. The ground-truth block below is the canonical reference for any
+reimplementation.
+"""
+
+from __future__ import annotations
 
 DEVELOPER_PROMPT = """\
 You are given itemized data extracted from Brazilian electronic receipts (NFC-e).
@@ -67,16 +78,23 @@ the weighted aggregation BEFORE stating the final index. Persist until complete.
 }
 """
 
-response = client.responses.create(
-    model="gpt-5.5",
-    input=[
-        {"role": "developer", "content": [{"type": "input_text", "text": DEVELOPER_PROMPT}]},
-    ],
-    text={"format": {"type": "text"}, "verbosity": "medium"},
-    reasoning={"effort": "medium", "summary": "auto"},
-    tools=[],
-    store=True,
-    include=["reasoning.encrypted_content", "web_search_call.action.sources"],
-)
+def main() -> None:
+    from openai import OpenAI  # imported lazily; see module docstring
 
-print(response.output_text)
+    client = OpenAI()
+    response = client.responses.create(
+        model="gpt-5.5",
+        input=[
+            {"role": "developer", "content": [{"type": "input_text", "text": DEVELOPER_PROMPT}]},
+        ],
+        text={"format": {"type": "text"}, "verbosity": "medium"},
+        reasoning={"effort": "medium", "summary": "auto"},
+        tools=[],
+        store=True,
+        include=["reasoning.encrypted_content", "web_search_call.action.sources"],
+    )
+    print(response.output_text)
+
+
+if __name__ == "__main__":
+    main()

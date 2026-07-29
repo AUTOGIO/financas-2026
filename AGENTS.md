@@ -15,7 +15,7 @@ Personal finance / analytics workspace (local-first). Prefer moves over rewrites
 | `docs/prompts/` | AI prompt files |
 | `tests/` | Tests only |
 | `archive/` | Obsolete files kept for reference |
-| Root | Only `README.md`, `AGENTS.md`, `.gitignore`, and toolchain files (e.g. `*.code-workspace`) |
+| Root | Only `README.md`, `AGENTS.md`, `.gitignore`, `Makefile`, `requirements.txt`, `sync.py`, and toolchain files (e.g. `*.code-workspace`) |
 
 ## Rules
 

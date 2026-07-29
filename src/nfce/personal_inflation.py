@@ -33,12 +33,27 @@ from collections import defaultdict
 from typing import Dict, Iterable, List, Tuple
 
 BASE = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(os.path.dirname(BASE))
 DEFAULT_NOTES_DIR = os.path.join(BASE, "notas")
 DEFAULT_JSON = os.path.join(BASE, "personal_inflation_data.json")
 DEFAULT_HTML = os.path.join(BASE, "personal_inflation_index.html")
 DEFAULT_VALIDATION_JSON = os.path.join(BASE, "personal_inflation_validation.json")
+DEFAULT_BASELINE_JSON = os.path.join(BASE, "personal_inflation_baseline.json")
 NS = {"n": "http://www.portalfiscal.inf.br/nfe"}
 MAX_JUMP = math.log(4)
+
+
+def _repo_relative(path: str) -> str:
+    """Return path relative to the repo root when possible.
+
+    Keeps validation payloads (and the fallback JSON embedded in
+    personal_inflation_index.html) free of the operator's username so the
+    output is portable between machines. See AUDIT-007.
+    """
+    try:
+        return os.path.relpath(os.path.abspath(path), REPO_ROOT)
+    except ValueError:
+        return path
 
 # IPCA annual (%) for a rough comparison line.
 IPCA_ANNUAL = {
@@ -53,6 +68,11 @@ IPCA_ANNUAL = {
     2026: 4.30,
 }
 
+# Ground-truth baseline. Kept in-file as a fallback for the test suite (which
+# imports this module and uses EXPECTED_METRICS directly) and as documentation
+# of the expected metric shape. The runtime pipeline prefers whatever is on
+# disk at DEFAULT_BASELINE_JSON so operators can bump the numbers after adding
+# receipts without editing this file. See AUDIT-016.
 EXPECTED_METRICS = {
     "receipts": 498,
     "cancelled_unique_keys": 4,
@@ -63,6 +83,32 @@ EXPECTED_METRICS = {
     "last_month": "2026-07",
     "yoy12_pct": 5.88,
 }
+
+
+def load_baseline(baseline_path: str) -> dict:
+    """Load the baseline metric dict from JSON, falling back to EXPECTED_METRICS."""
+    if not os.path.exists(baseline_path):
+        return dict(EXPECTED_METRICS)
+    try:
+        with open(baseline_path, encoding="utf-8") as handle:
+            raw = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return dict(EXPECTED_METRICS)
+    return {k: v for k, v in raw.items() if not k.startswith("_")}
+
+
+def save_baseline(baseline_path: str, metrics: dict) -> None:
+    payload = {
+        "_note": (
+            "Ground-truth baseline for src/nfce/personal_inflation.py. "
+            "Update via `python3 personal_inflation.py --accept-new-baseline` "
+            "after intentional data additions (see AUDIT-016 in REPOSITORY_AUDIT.md)."
+        ),
+    }
+    payload.update(metrics)
+    with open(baseline_path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
 
 
 def _txt(el: ET.Element | None, path: str) -> str:
@@ -157,10 +203,13 @@ def index_to_month(index: int) -> str:
     return f"{index // 12:04d}-{index % 12 + 1:02d}"
 
 
-def scan_xml_inventory(notes_dir: str) -> dict:
-    xml_dirs = sorted(glob.glob(os.path.join(notes_dir, "NFCE_XML_*")))
+def scan_xml_inventory(notes_dir: str, xml_dirs: List[str] | None = None) -> dict:
+    if xml_dirs is None:
+        xml_dirs = sorted(glob.glob(os.path.join(notes_dir, "NFCE_XML_*")))
+    else:
+        xml_dirs = sorted(xml_dirs)
     if not xml_dirs:
-        raise SystemExit(f"nenhuma pasta NFCE_XML_* encontrada em {notes_dir}")
+        raise SystemExit(f"nenhuma pasta XML encontrada em {notes_dir}")
 
     cancel_files = []
     cancel_keys = set()
@@ -194,11 +243,11 @@ def scan_xml_inventory(notes_dir: str) -> dict:
     }
 
 
-def parse_receipts(notes_dir: str) -> Tuple[List[dict], dict]:
-    inventory = scan_xml_inventory(notes_dir)
+def parse_receipts(notes_dir: str, xml_dirs: List[str] | None = None) -> Tuple[List[dict], dict]:
+    inventory = scan_xml_inventory(notes_dir, xml_dirs=xml_dirs)
     validation = {
-        "notes_dir": notes_dir,
-        "xml_directories": inventory["xml_dirs"],
+        "notes_dir": _repo_relative(notes_dir),
+        "xml_directories": [_repo_relative(d) for d in inventory["xml_dirs"]],
         "xml_note_files": len(inventory["receipt_files"]),
         "unique_xml_keys": len(inventory["key_to_paths"]),
         "duplicate_xml_key_instances": inventory["duplicate_instances"],
@@ -490,7 +539,9 @@ def build_index(receipts: List[dict], validation: dict) -> dict:
     }
 
 
-def verify_expected_metrics(data: dict, validation: dict) -> dict:
+def verify_expected_metrics(data: dict, validation: dict, expected: dict | None = None) -> dict:
+    if expected is None:
+        expected = EXPECTED_METRICS
     actual = {
         "receipts": data["kpis"]["receipts"],
         "cancelled_unique_keys": validation["cancelled_unique_keys"],
@@ -502,10 +553,10 @@ def verify_expected_metrics(data: dict, validation: dict) -> dict:
         "yoy12_pct": round(data["kpis"]["yoy12_pct"], 2),
     }
     mismatches = []
-    for key, expected_value in EXPECTED_METRICS.items():
+    for key, expected_value in expected.items():
         if actual[key] != expected_value:
             mismatches.append({"metric": key, "expected": expected_value, "actual": actual[key]})
-    return {"expected": EXPECTED_METRICS, "actual": actual, "matches": not mismatches, "mismatches": mismatches}
+    return {"expected": dict(expected), "actual": actual, "matches": not mismatches, "mismatches": mismatches}
 
 
 def write_html_payload(html_path: str, data: dict, validation_report: dict) -> None:
@@ -539,8 +590,10 @@ def build_cli() -> argparse.ArgumentParser:
     parser.add_argument("--output-json", default=DEFAULT_JSON, help="Main analysis JSON output.")
     parser.add_argument("--output-html", default=DEFAULT_HTML, help="HTML file to inject data into.")
     parser.add_argument("--validation-json", default=DEFAULT_VALIDATION_JSON, help="Validation JSON output.")
+    parser.add_argument("--baseline-json", default=DEFAULT_BASELINE_JSON, help="JSON file with expected metric baseline (see AUDIT-016).")
     parser.add_argument("--skip-html", action="store_true", help="Do not inject data into the HTML file.")
-    parser.add_argument("--verify-ground-truth", action="store_true", help="Exit non-zero if the current results do not match the repo baseline metrics.")
+    parser.add_argument("--verify-ground-truth", action="store_true", help="Exit non-zero if the current results do not match the baseline metrics.")
+    parser.add_argument("--accept-new-baseline", action="store_true", help="Overwrite --baseline-json with the current run's metrics.")
     return parser
 
 
@@ -549,7 +602,8 @@ def main(argv: List[str] | None = None) -> int:
 
     receipts, validation = parse_receipts(args.notes_dir)
     data = build_index(receipts, validation)
-    verification = verify_expected_metrics(data, validation)
+    expected = load_baseline(args.baseline_json)
+    verification = verify_expected_metrics(data, validation, expected=expected)
 
     validation_report = {
         "source_of_truth": "XML files under notas/NFCE_XML_*",
@@ -588,6 +642,10 @@ def main(argv: List[str] | None = None) -> int:
         print("ground truth check: FAIL")
         for mismatch in verification["mismatches"]:
             print(f"  - {mismatch['metric']}: esperado={mismatch['expected']} atual={mismatch['actual']}")
+        if args.accept_new_baseline:
+            save_baseline(args.baseline_json, verification["actual"])
+            print(f"baseline atualizado: {os.path.basename(args.baseline_json)}")
+            return 0
         if args.verify_ground_truth:
             return 1
     return 0

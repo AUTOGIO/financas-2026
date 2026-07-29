@@ -4,7 +4,7 @@ type: project-close-report
 status: operational (Phase 1 complete, frozen for weekly maintenance)
 date: 2026-07-07
 owner: Eddie
-repo_path: /Users/eduardofgiovannini/Documents/financas-2026
+repo_path: /Users/eduardofgiovannini/Documents/GitHub/financas-2026
 generated_by: Claude (Cowork)
 data_period_covered: Jan–Jun 2026
 build_window: 2026-07-01 to 2026-07-07

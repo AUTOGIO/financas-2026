@@ -1,10 +1,19 @@
 #!/usr/bin/env bash
 # financas-2026 · Open workspace (ChatGPT Atlas edition)
 # Runs sync → opens Excel + 3 dashboards in Atlas → triggers Hammerspoon layout
-# Usage: bash ~/Documents/financas-2026/scripts/financas-open.sh
+# Usage: bash ~/Documents/GitHub/financas-2026/scripts/financas-open.sh
 
-BASE="$HOME/Documents/financas-2026"
-PYTHON="/opt/homebrew/bin/python3"
+BASE="$HOME/Documents/GitHub/financas-2026"
+# Prefer a project venv if the operator has one, else caller override, else PATH.
+if [ -x "$BASE/.venv/bin/python3" ]; then
+  PYTHON="$BASE/.venv/bin/python3"
+else
+  PYTHON="${PYTHON:-$(command -v python3)}"
+fi
+if [ -z "$PYTHON" ] || [ ! -x "$PYTHON" ]; then
+  echo "❌ python3 not found on PATH. Install Python 3.10+ or set PYTHON=/path/to/python3" >&2
+  exit 1
+fi
 ATLAS="ChatGPT Atlas"
 
 echo "🔄 Syncing data..."

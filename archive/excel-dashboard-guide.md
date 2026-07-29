@@ -1,6 +1,6 @@
 # Excel Interactive Dashboard — Open-Source Tools Guide
 > **Context:** Paste this into Claude Code as a knowledge base / system prompt reference.
-> **Author context:** [REDACTED] | Giovannini Mare Capital | Python · macOS · Financial dashboards
+> **Author context:** [REDACTED] | [REDACTED-ORG] | Python · macOS · Financial dashboards
 
 ---
 
@@ -465,7 +465,7 @@ Configure datasource URL to point to a CSV export from Excel, or use a local fil
 
 ## 4. FULL STACK RECIPE: Dash + xlwings + pandas
 
-This is the recommended combination for **Giovannini Mare Capital** — Python financial data pipeline with live Excel sync and web dashboard.
+This is the recommended combination for **[REDACTED-ORG]** — Python financial data pipeline with live Excel sync and web dashboard.
 
 ```
 project/
@@ -520,7 +520,7 @@ df = load_portfolio()
 summary = get_summary(df)
 
 app.layout = html.Div([
-    html.H1("Giovannini Mare Capital — Portfolio Dashboard"),
+    html.H1("[REDACTED-ORG] — Portfolio Dashboard"),
 
     # KPI Cards
     html.Div([
@@ -732,4 +732,4 @@ ws.range("A1").value = "Title"
 
 ---
 
-*Generated: July 2026 | Giovannini Mare Capital*
+*Generated: July 2026 | [REDACTED-ORG]*
