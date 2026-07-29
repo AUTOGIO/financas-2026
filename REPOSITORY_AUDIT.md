@@ -1086,7 +1086,7 @@ force-pushed to `origin/master`.
 
 | ID | Status | Notes |
 |----|--------|-------|
-| AUDIT-001 | Done (tree) | CPF/name/address/phone redacted in HTML, Markdown, and `data/raw/mercado_pago/*`. Executive PDF moved to `archive/`. Git history still contains originals until `scripts/rewrite_history_pii.sh` is run. |
+| AUDIT-001 | Done | CPF/name/address/phone redacted in tree; history purged via `git-filter-repo` + force-push. Executive PDF in `archive/`. |
 | AUDIT-002 | Done (tree) | `NFCE_XML_*` removed from the index; local data lives under `$HOME/.financas-notas/personal/` and is symlinked from `src/nfce/notas/`. Paths gitignored. |
 | AUDIT-003 | Done | Root workbook removed; canonical copy is `data/financas2026-DataEntry.xlsx`. `analytics_engine.py` refuses to run if a root stray reappears. |
 | AUDIT-004 | Done | Stale report archived; fresh `docs/technical-report-2026-07.md` reflects current layout. |
