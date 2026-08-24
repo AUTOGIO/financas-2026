@@ -12,6 +12,7 @@ from personal_inflation import (
     build_product_id,
     chain_index_series,
     compute_monthly_product_stats,
+    parse_number,
     parse_receipts,
     spread_monthly_log_change,
 )
@@ -50,6 +51,11 @@ class PersonalInflationMethodologyTests(unittest.TestCase):
     def test_product_identity_falls_back_for_invalid_ean(self):
         product_id = build_product_id("35128392000153", "PIZZA GRANDE (8 FATIAS)", "ABC123")
         self.assertEqual(product_id, "DSC:35128392:PIZZA GRANDE 8 FATIAS")
+
+    def test_parse_brazilian_number(self):
+        validation = {"missing_numeric_fields": 0, "malformed_numeric_fields": 0}
+        self.assertAlmostEqual(parse_number("1.104,98", validation, "total", "t"), 1104.98)
+        self.assertAlmostEqual(parse_number("89,99", validation, "unit", "t"), 89.99)
 
     def test_unit_mismatch_is_prevented_by_grouping_key(self):
         same_product = build_product_id("08414996000274", "CENOURA kg", "SEM GTIN")
@@ -119,6 +125,27 @@ class IncrementalRefreshDedupTests(unittest.TestCase):
             self.assertEqual(validation["cancelled_unique_keys"], 1)
             self.assertEqual(validation["duplicate_xml_key_instances"], 1)  # the re-download
             self.assertEqual(validation["cancelled_receipts_skipped"], 1)
+
+    def test_receipt_txt_export_parsed(self):
+        from personal_inflation import parse_sefaz_receipt_txt_exports
+
+        header = (
+            "Chave_de_acesso|Numero|Serie|Data_de_emissao|Situacao|Valor_total_da_nota|"
+            "Nome_razao_social_emit|CPF_CNPJ_emit|Cod_prod|Descricao_do_Produto_ou_servicos|"
+            "NCM_prod|Unid_com|Quant_com|Valor_unit_com|Valor_total_prod|Cod_EAN\n"
+        )
+        key = "2" * 44
+        row = (
+            f"{key}|1|1|2026-07-16 20:40:05|A|10,00|Supermercado Litoral|08.189.400/0001-07|"
+            "1|ARROZ TIO JOAO|10063021|UN|1,00|10,00|10,00|7896006710150\n"
+        )
+        with tempfile.TemporaryDirectory() as root:
+            with open(os.path.join(root, "NFCE_20260101000000.txt"), "w", encoding="utf-8") as handle:
+                handle.write(header + row)
+            receipts, validation = parse_sefaz_receipt_txt_exports(root)
+            self.assertEqual(validation["receipt_txt_receipts"], 1)
+            self.assertEqual(receipts[0]["cnpj"], "08189400000107")
+            self.assertEqual(receipts[0]["items"][0]["ean"], "7896006710150")
 
 
 if __name__ == "__main__":

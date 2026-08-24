@@ -90,6 +90,18 @@ class LitoralStorePricesTests(unittest.TestCase):
             self.assertEqual(receipts[0]["cnpj"], LITORAL_CNPJ)
             self.assertEqual(len(receipts[0]["items"]), 2)
 
+    def test_parse_compact_product_txt(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = os.path.join(root, "NFCE_20260101000002.txt")
+            with open(path, "w", encoding="utf-8") as handle:
+                handle.write("Data_de_emissao|Descricao_do_Produto_ou_servicos|NCM_prod|Valor_unit_com\n")
+                handle.write("2023-12-30 12:33:28|FARINHA DE MANDIOCA|11062000|5,5\n")
+            receipts, validation = parse_sefaz_txt_exports(root)
+            self.assertEqual(validation["txt_rows"], 1)
+            self.assertEqual(validation["txt_synthetic_receipts"], 1)
+            self.assertEqual(receipts[0]["items"][0]["qty"], 1.0)
+            self.assertEqual(receipts[0]["items"][0]["unit_price"], 5.5)
+
     def test_staple_match_and_payload(self):
         with tempfile.TemporaryDirectory() as root:
             folder = os.path.join(root, "NFCE_XML_TEST")

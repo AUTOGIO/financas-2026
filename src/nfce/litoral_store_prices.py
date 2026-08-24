@@ -43,6 +43,7 @@ from personal_inflation import (
     normalize_ean,
     parse_number,
     parse_receipts,
+    parse_sefaz_receipt_txt_exports,
     write_html_payload,
 )
 
@@ -130,15 +131,27 @@ def parse_sefaz_txt_exports(notes_dir: str) -> Tuple[List[dict], dict]:
             if "Data_de_emissao" not in header or "Descricao_do_Produto" not in header:
                 validation["txt_malformed_rows"] += 1
                 continue
+            if "Chave_de_acesso" in header:
+                validation["txt_malformed_rows"] += 1
+                continue
+            columns = [name.strip() for name in header.strip().split("|")]
+            compact = len(columns) <= 5
             for line_no, line in enumerate(handle, start=2):
                 line = line.strip()
                 if not line:
                     continue
                 parts = line.split("|")
-                if len(parts) < 8:
+                if compact:
+                    if len(parts) < 4:
+                        validation["txt_malformed_rows"] += 1
+                        continue
+                    emitted, desc, ncm, unit_raw = parts[:4]
+                    _cst, uom, qty_raw, total_raw = "", "UN", "1", unit_raw
+                elif len(parts) < 8:
                     validation["txt_malformed_rows"] += 1
                     continue
-                emitted, desc, ncm, _cst, uom, qty_raw, unit_raw, total_raw = parts[:8]
+                else:
+                    emitted, desc, ncm, _cst, uom, qty_raw, unit_raw, total_raw = parts[:8]
                 emitted = emitted.strip()
                 if len(emitted) < 10:
                     validation["txt_malformed_rows"] += 1
@@ -156,10 +169,10 @@ def parse_sefaz_txt_exports(notes_dir: str) -> Tuple[List[dict], dict]:
                         "desc": desc.strip(),
                         "ean": "",
                         "ncm": ncm.strip(),
-                        "qty": qty,
+                        "qty": qty if qty > 0 else 1.0,
                         "uom": (uom or "UN").upper().strip(),
                         "unit_price": unit_price,
-                        "total": total if total > 0 else round(qty * unit_price, 2),
+                        "total": total if total > 0 else round((qty if qty > 0 else 1.0) * unit_price, 2),
                     }
                 )
 
@@ -231,6 +244,27 @@ def load_store_receipts(notes_dir: str) -> Tuple[List[dict], dict]:
     receipts.extend(txt_receipts)
     validation.update(txt_validation)
 
+    receipt_txt, receipt_txt_validation = parse_sefaz_receipt_txt_exports(notes_dir)
+    xml_keys = {row["key"] for row in receipts if len(row.get("key", "")) == 44}
+    receipt_txt_added = 0
+    for receipt in receipt_txt:
+        if receipt["key"] in xml_keys:
+            receipt_txt_validation["receipt_txt_skipped_existing_xml"] = (
+                receipt_txt_validation.get("receipt_txt_skipped_existing_xml", 0) + 1
+            )
+            continue
+        if (receipt.get("cnpj") or "") != LITORAL_CNPJ:
+            receipt_txt_validation["receipt_txt_skipped_other_cnpj"] = (
+                receipt_txt_validation.get("receipt_txt_skipped_other_cnpj", 0) + 1
+            )
+            continue
+        receipt.setdefault("source", "receipt_txt")
+        receipts.append(receipt)
+        xml_keys.add(receipt["key"])
+        receipt_txt_added += 1
+    receipt_txt_validation["receipt_txt_receipts_added"] = receipt_txt_added
+    validation.update(receipt_txt_validation)
+
     if not receipts:
         raise SystemExit(f"nenhuma NFC-e XML ou NFCE_*.txt encontrada em {notes_dir}")
 
@@ -239,6 +273,7 @@ def load_store_receipts(notes_dir: str) -> Tuple[List[dict], dict]:
     validation["parsed_items"] = sum(len(row["items"]) for row in receipts)
     validation["xml_receipts"] = sum(1 for row in receipts if row.get("source") == "xml")
     validation["txt_receipts"] = sum(1 for row in receipts if row.get("source") == "txt")
+    validation["receipt_txt_receipts_kept"] = sum(1 for row in receipts if row.get("source") == "receipt_txt")
     return receipts, validation
 
 

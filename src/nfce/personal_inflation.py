@@ -134,7 +134,10 @@ def parse_number(raw: str, validation: dict, field_name: str, context: str) -> f
         validation["missing_numeric_fields"] += 1
         _record_example(validation, "missing_numeric_examples", {"field": field_name, "context": context})
         return 0.0
-    text = text.replace(",", ".")
+    if "," in text and "." in text:
+        text = text.replace(".", "").replace(",", ".")
+    else:
+        text = text.replace(",", ".")
     try:
         return float(text)
     except ValueError:
@@ -203,6 +206,96 @@ def index_to_month(index: int) -> str:
     return f"{index // 12:04d}-{index % 12 + 1:02d}"
 
 
+def _digits_only(value: str) -> str:
+    return re.sub(r"\D", "", value or "")
+
+
+def parse_sefaz_receipt_txt_exports(notes_dir: str) -> Tuple[List[dict], dict]:
+    """Parse SEFAZ pipe-delimited receipt exports (one row per line item).
+
+    Header includes ``Chave_de_acesso`` plus product columns such as
+    ``Descricao_do_Produto_ou_servicos``, ``Quant_com``, ``Valor_unit_com``.
+    """
+    paths = sorted(glob.glob(os.path.join(notes_dir, "NFCE_*.txt")))
+    validation = {
+        "receipt_txt_files": [_repo_relative(p) for p in paths],
+        "receipt_txt_file_count": len(paths),
+        "receipt_txt_rows": 0,
+        "receipt_txt_malformed_rows": 0,
+        "receipt_txt_receipts": 0,
+    }
+    if not paths:
+        return [], validation
+
+    buckets: Dict[str, dict] = {}
+    blank_validation = {
+        "missing_numeric_fields": 0,
+        "malformed_numeric_fields": 0,
+    }
+
+    for path in paths:
+        with open(path, encoding="utf-8-sig", errors="replace") as handle:
+            header = handle.readline()
+            if "Chave_de_acesso" not in header:
+                continue
+            columns = [name.strip() for name in header.strip().split("|")]
+            index = {name: position for position, name in enumerate(columns)}
+
+            def col(parts: List[str], name: str, default: str = "") -> str:
+                position = index.get(name)
+                if position is None or position >= len(parts):
+                    return default
+                return parts[position].strip()
+
+            for line_no, line in enumerate(handle, start=2):
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split("|")
+                key = col(parts, "Chave_de_acesso")
+                if len(key) != 44:
+                    validation["receipt_txt_malformed_rows"] += 1
+                    continue
+                validation["receipt_txt_rows"] += 1
+                context = f"{os.path.basename(path)}:{line_no}"
+
+                if key not in buckets:
+                    emitted = col(parts, "Data_de_emissao")
+                    cnpj_raw = col(parts, "CPF_CNPJ_emit")
+                    buckets[key] = {
+                        "key": key,
+                        "date": emitted[:10] if emitted else "",
+                        "month": emitted[:7] if emitted else "",
+                        "merchant": col(parts, "Nome_razao_social_emit"),
+                        "cnpj": _digits_only(cnpj_raw),
+                        "total": parse_number(col(parts, "Valor_total_da_nota"), blank_validation, "receipt_total", key),
+                        "items": [],
+                        "source": "receipt_txt",
+                    }
+
+                qty = parse_number(col(parts, "Quant_com"), blank_validation, "qty", context)
+                unit_price = parse_number(col(parts, "Valor_unit_com"), blank_validation, "unit_price", context)
+                total = parse_number(col(parts, "Valor_total_prod"), blank_validation, "item_total", context)
+                ean = col(parts, "Cod_EAN")
+                buckets[key]["items"].append(
+                    {
+                        "desc": col(parts, "Descricao_do_Produto_ou_servicos"),
+                        "ean": ean,
+                        "ncm": col(parts, "NCM_prod"),
+                        "qty": qty,
+                        "uom": col(parts, "Unid_com", "UN").upper().strip() or "UN",
+                        "unit_price": unit_price,
+                        "total": total if total > 0 else round(qty * unit_price, 2),
+                    }
+                )
+
+    receipts = [buckets[key] for key in sorted(buckets)]
+    validation["receipt_txt_receipts"] = len(receipts)
+    validation["receipt_txt_missing_numeric_fields"] = blank_validation["missing_numeric_fields"]
+    validation["receipt_txt_malformed_numeric_fields"] = blank_validation["malformed_numeric_fields"]
+    return receipts, validation
+
+
 def scan_xml_inventory(notes_dir: str, xml_dirs: List[str] | None = None) -> dict:
     if xml_dirs is None:
         xml_dirs = sorted(glob.glob(os.path.join(notes_dir, "NFCE_XML_*")))
@@ -254,6 +347,7 @@ def parse_receipts(notes_dir: str, xml_dirs: List[str] | None = None) -> Tuple[L
         "duplicate_xml_keys": inventory["duplicate_keys"][:8],
         "cancelled_files": len(inventory["cancel_files"]),
         "cancelled_unique_keys": len(inventory["cancel_keys"]),
+        "cancelled_keys": sorted(inventory["cancel_keys"]),
         "cancelled_keys_without_note": sorted(inventory["cancel_keys"] - set(inventory["key_to_paths"]))[:8],
         "malformed_numeric_fields": 0,
         "missing_numeric_fields": 0,
@@ -601,12 +695,31 @@ def main(argv: List[str] | None = None) -> int:
     args = build_cli().parse_args(argv)
 
     receipts, validation = parse_receipts(args.notes_dir)
+    xml_keys = {row["key"] for row in receipts}
+    cancel_keys = set(validation.get("cancelled_keys") or [])
+    txt_receipts, txt_validation = parse_sefaz_receipt_txt_exports(args.notes_dir)
+    validation.update(txt_validation)
+    txt_added = 0
+    for receipt in txt_receipts:
+        if receipt["key"] in xml_keys:
+            validation["receipt_txt_skipped_existing_xml"] = validation.get("receipt_txt_skipped_existing_xml", 0) + 1
+            continue
+        if receipt["key"] in cancel_keys:
+            validation["receipt_txt_skipped_cancelled"] = validation.get("receipt_txt_skipped_cancelled", 0) + 1
+            continue
+        receipts.append(receipt)
+        xml_keys.add(receipt["key"])
+        txt_added += 1
+    validation["receipt_txt_receipts_added"] = txt_added
+    receipts.sort(key=lambda row: (row["date"], row["key"]))
+    validation["parsed_receipts"] = len(receipts)
+    validation["parsed_items"] = sum(len(row["items"]) for row in receipts)
     data = build_index(receipts, validation)
     expected = load_baseline(args.baseline_json)
     verification = verify_expected_metrics(data, validation, expected=expected)
 
     validation_report = {
-        "source_of_truth": "XML files under notas/NFCE_XML_*",
+        "source_of_truth": "XML under notas/NFCE_XML_* plus SEFAZ receipt NFCE_*.txt (keys not already in XML)",
         "validation": validation,
         "ground_truth_check": verification,
     }
